@@ -1,0 +1,686 @@
+vt_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 100
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+  ae  t ae e ha t ses sthist sh toue hee th   h at s sh hes ho s he th a  as hi thon enes t t t ha ate h  seat s teatothe  tha hh ta h h s
+
+e shes harot  a he t he s hhh  aresh  thoshe  sh s
+h ho t hhhe hhea h sh s h s hhhe hoth  he he
+
+ s
+hah ha hos s ahh he s
+heh  hhho hahe he  thha t he at   toth tha a hothhar se  h h h s a a th ho h t hh h sh she anhan h s tha  t  the he han
+
+he h s h har a soh ha t ah ha   a ha th tos shor h arhe thohh  tho arorarohe
+
+
+ hos
+
+
+ho  thar h at
+he thos hhe t
+
+
+ 
+
+    Nucleus (0.5) (500 max_tokens):
+    
+e t  othe  e  torolos th the she t th s e t t th  athahe t t l mos eehers es th l lihe seshes h t e sh as seseas thas a seh th s t he e
+ es h thhe is sh soth ihe ha hh h shhan theoo   has a s t s s he athae t s thos th h h t e thar h h at the  he sou s  h aro he  e hat th he s   th i anehehe e thon she a s the he th eo t houe
+athaeo h t t  thor  he hane the
+ os he  thashohor hous
+ th eohar   hath  the a sh t h aroh se s i he
+
+
+
+
+an hhh he
+hahhe he s h th heothe
+on s s  athe ah  e h shathe  he ho
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou artte s h t s at t s hhheh thho h se s a h  t th t th w te he e t ha th h as es h ssss haehaeass th  shathhe a hhh  a a hes hanhe haheheahohh  tho hearan
+
+
+
+
+
+
+he t he
+ ahhh h t  s hehha teho t
+hohe h ha thot t h th a horhan   s a hath  hah a h thehoh hha h   the h h thhe the sh athe s
+
+he a anotheo thohe h the t he   hhhe
+
+
+ tare s t
+ahhha  h hoso s   t  t
+
+ tot h t  heo he h  h hho  ahe ar a thos
+
+athot
+a hath  he haro th  shheheare
+hat
+
+a thathat  a s thhhat that hho the ho aha he
+athha t s h h 
+
+DANIEL: Ay, my dear, te thea ha testhe hahea l t t thas athatou an e har to t s th te   han as s has ee hahes t the h t wis h tha he
+
+
+
+
+ s sh   t
+ s t hahhe ase he  t athes
+ thha ar he a hhothhe t th a hhe
+  h hon
+hhe thos
+ t th hehe
+he s hatharon
+
+a  are a hathe  s ara theohhes he t ha athe h ane h t sotot han ha ah  a a  h h a t he he the ath he
+ath a s th hore s ho t t hha t a t h t h sosho    anha h ath th h s  hh  hose
+he s
+ s  h se t s     he he  tat ha hos h shh ar ha  hor theathorhan hha s
+ s hothhorane he
+    -----------------------------------------------------
+    vt_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 200
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+U on s sor asalas s lang s ther thal less m mas l se se bes me s senthe mis alil son tals t t t ar porer moungal te llase bone le male asesat seraser ben alle tee s ser s aleso sout and s s an bo athingathen herast an s men mor seneneeer saran an st mere t s as tes totho thit ter therer me as be men thand
+
+
+Woutit aren s,
+As as an s me me he mend se mangan thal ble t toreend bandise men menorind an sase me th minorane ato as s andoraleesoun mano mend,
+
+
+
+Wereronges t ses s s atothales, the toron
+
+    Nucleus (0.5) (500 max_tokens):
+    
+OI
+UONe thas me tolos the thesse mes t t mes t me athathare so mes merend the p lend mesesthe me and hanthe se s thas an se there me lenges me so s s sere thene me asotherothe theso t bon an me s s ses the se manerathe the t mese s hen ane thande sound mang t se an s m thene man therenen ben me m m s t asengese beng me t me mend asor t s t bothaseng bereng angounen thase her hen m than har m t the mare mes t llaron se s beng mathand has merer sere son me mengond t s s thane an as hen athe me the
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou arton souse s at t s soren le mas se ser as mesast thimore an ple manthe bes pal thes thand an then the ar s anor t alarond hange alllere as seser tharangare mate t ber mind ale se se sangeronesange mithengot t t t sathorerer mo areee anore asotill thillan b mound,
+H t an ble sas the se be angouthen thone alere t sto be he atheerend thas mas s beno s mat lero bll mot anes se s ale til me sal an sonothousalalasthingere the th s heren as menge tereest th sathangores t sthesar so atisee athan t s more
+
+DANIEL: Ay, my dear, te ther byand te s an at t thon thalasalan an man anto m ales te t man mouseend al banes theren tit mat sand se at an b the s me t asoun ase hee tilares sthanger he s s s hen m male hee t be s s herenono t thas hiserer sasengongan sorisallle t balest ther hes sene harases s mat aland toun te tharo t as me man t be me tit athenengothale thee se send t t beneril tindo alo s se b ang hand th the st hig mousater s m meraler s me malend me t at an borine allerallorithen honoron mator s bland
+
+Wher a
+    -----------------------------------------------------
+    vt_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 300
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+ETon s mor asong thes sthisthit that mes th man at s be bes me s se thean an mil sou tile t thirer ate thisengav teallale bour athes m asorat shes harote alll te s se han alle m thothe s hal mino athingathil herast an s man mot send heer sthan an mind alonger ste t theng hine ter therer me as anderal angand
+Whe m seren h thas s he shour t he mendise hange ang sthar t areeend handise men henorind an s me me hatigo mane ato ashorendoraleesoun mano mend,
+
+
+
+Whishoreee t mendothilende thesthil t th 
+
+    Nucleus (0.5) (500 max_tokens):
+    
+ORUSONThe, he tono t athe there be theso wes thes athalest t he hin there the the thand thallat t f s an s arenenghal an se at s borerer he me so s s sere thenghar anotherothe theso t bon an mees s hes the atharonoure the s al thare the t the the sound mang t se an hat thenges me s aron here me mang t se serese beng me t me menoure bat st manore hen berengou boun t thango so hen mere thes al thend more mes t alero ber s benge sthand haller me s he all me hengond t s s thand al al henghare me the
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou arthe souse s atit s sheend be th se ser m torer t thimore anor t manghe bes mal thes thand and, th wiste to anor t alarond hango allleralou heshishe athenge
+
+
+Whit her more ale as se soune, anghighig mas tot t he t athorerer mo arenot he he ang he thillanou mound,
+Hathat the s s the soure, thisouso thone hithe t ato ath marenderend thasher alle me s mat hero tot mot anoushe s ale hil me hal an songesthouralasthinge meralor t mererares menge thathat han mer hat that hes thindo atisendou male s mor 
+
+DANIEL: Ay, my dear, te ther balere tes anom her moutho alile t an manginto mesthileng f an mousteno al banes therenorit mat sthanee at an t he there t asoun asee th tilares sthinger heer heril al thale hee t this sheerenono t that hind ar hasengongang ale allle t as ast ther hes mere harases s mat athesotoun thond as thor me han t he me tit athenengothale the
+
+
+
+Thendig tothane arene, halo s he,
+Wang hand th the s he h mouthind s m merale tino s al he me t at has has hang he tourithen honoro hou se s hothe maner a
+    -----------------------------------------------------
+    vt_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 400
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+Ano thass, aseng the ang whelllll hateses wingh whes whe shath s hen hean an fowound tale atorirar atear mous.
+
+Worallase wour atheale as ste sheasear te alll tee s shot aree t athothe s halll ho athingathe, herator, s hino mor senene he seran arert my araser steat,
+Then hile ter therer merat anderal angr hitheall ar m h tharas he ande her h mendishe angan hes thar therenghe hand
+We men henorind an s, ther hatigo mare ato as arendind thar, teano areas the tishore s tileralle
+
+
+
+Wh ther her toro 
+
+    Nucleus (0.5) (500 max_tokens):
+    
+HIUS:
+Whe, he toro thath menoust math so wesours mathe here so me sond me me me sendond fore at to the atheare sthathar are at s w athee we athat s s seralourer me another the thero thenoran me s s he woneeathar s s theree the thare theat the the sound manghe
+Thare hat then mer thaleron here me mangot se s the heren me woroun athath m t thathere hen angheren s hathathanghend hen m whanous ar w the mareal he
+
+Tharo mer s ar therond ther wor me were all me hengondond ar thand al al henghe he he he
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou arthe wouse what t senorend whind we sthin torth te his te wo mat manthe beralll these hand and,
+Th wis, whe anor t alarond hango alllerer h heshisheart marden t at her more ale as seand meroungange mithengot t he
+Thathar an s s areath he heasourer thillan h mile myo that the she ande atheal angous, thone his,
+Whast we h athenderend thas my alle meas mat hero tor mothenoushe s, he hilono hal an s merothouralas
+Wh her arou th shereraren menge, ar hat han mer hat that hen thindo atis,
+
+Wh male s my t
+
+DANIEL: Ay, my dear, we ther warersther anom her moutho while.
+
+ATher ar to meale meng f an an stean al thees therenor, wis ather se at ano she there t asoun atheate t marend thal me heer heril al thale he
+
+Thishend herear, at that his mer hasengongan s, t allle t are malllloures, ane harases h ane athe atoun te tharo thor me han t he me titeathealart,
+The thee at sero titothane arene, halo she t arear horer thar st har maseater s,
+Theraler s m s alend meat at has h she arend toulleard
+Tond t houto thinother, ser a
+    -----------------------------------------------------
+    vt_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 500
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+Ano thass, aseng the anckist shar at mes thangh whes wit shat ander thean fath
+ALUCONG:
+TICECY:
+TE:
+
+CELI IO:
+TE:
+WARC:
+CIUS:
+W:
+TIOLIC:
+WECICICING VICET:
+NT:
+MONI mee, sare, wo thothe silll my meat theat sath shyor, sin,
+
+
+
+Me sealle he sar hil arend ald sis steer, alll hale her thorst mear,
+Theer theand hith tit aren ar as as he ande here ar sas heat, watht wis than theend hand.
+
+
+CORCKONTOMIOM:
+
+MANICONG:
+T:
+
+OUKENINORCETEOM:
+M:
+WINGOMOLIN:
+
+NOLO:
+
+
+
+MOO:
+WER:
+WENO:
+WI:
+
+
+
+
+
+NT:
+WENG:
+TINor I
+
+    Nucleus (0.5) (500 max_tokens):
+    
+HIUS:
+Wher he tor so ath fore he mat sore far wis athe har the mean shers fof the sarerse beang the so at sereat thal an shat serar,
+The wheat she mand malll are athen har that ther theng an the send
+Whal mat maler the the the thar heno the thar, sound mang the the hat then mear thear thar,
+
+That an thend where woun me wo win ath sar ther ather and sang than sar that se o so hen math thear wand
+Thand man she and whand sher thang the hall thar were all me hend shand ar thand al al hangh the se he
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou art, sor, me athit senore, that sate ser hat stave this to he ald
+Wanthe berars horsth band and, thy shath ser ard sall heare and,
+Thersthou heen, hear hange mat at her mord are as seand meroung she mitheng sat hen sath myong ho areng alo hal mare,
+
+Willl har ale mit that the sas and satheal aloth anghen ardere that hero athend,
+Thald asher alle so so at hero tor mat anearse he he hil mee art sis meastheale asth her hard tha sharer,
+
+
+And san arend thand thang, that han thind athis, alald the ar he
+
+DANIEL: Ay, my dear, we ther hare, ther an at he tont hay.
+
+Fou an mang, to mand wheng fran an stean al bu that when wis wat sund seat an ard wo alld thas,
+Thyot hee wilares so harer hear heril at that he the this sheere tha t that his mer are ard
+
+
+Whoulld, hat theal, then, thean ang hardsen hard theand,
+
+
+ANGNTECENGTEONIT:
+TETICOLONG:
+
+CINCIONO:
+
+TOMIONING:
+
+
+
+
+TE:
+C:
+MENGONGT:
+
+
+MO:
+NINICET:
+TETO:
+
+
+WENOMI VE:
+WICI:
+
+MOLER:
+
+NERO:
+MIONG:
+Tom VICI V:
+
+
+
+
+
+
+Wayo thar, sal, mallllly yoth mean my ald sint ard, ser a
+    -----------------------------------------------------
+    vt_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 600
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+EThe sass, aseng the ant,
+Buthe that mees a to som sast bes, the henthea ay alisth songe
+That trave thar moung thord byo so mand thale a stat sis sear
+We alll the shis, sarend, wou sand shy anth, a ar hath and shyor, singhe mor sen
+Theer sar hilardeand arand at that beng hale wer the
+Thard at a tor thancand thatit aren ar as as hee has her her fas heat,
+
+That wis tha aren, ar and seen soungald, sou sa the that ar mare
+Not andir hasengeat an mand areas thear shore shalld.
+
+
+
+
+
+
+
+NOMENUS:
+
+CINUKIN
+
+    Nucleus (0.5) (500 max_tokens):
+    
+ORUS:
+Wherang ton so ath fore fo mat sare fard so athe har the meand.
+
+
+CENOMELEN:
+By wand meat the shand share shat ar my sat sot athe
+
+
+
+
+CENGCECONCICETET:
+
+Thar and hard and, sor thall an my sot sot thal thard,
+
+Whe the the thar hen athe thar by wis mang the the hat then my my sard thar the thand theath the here
+The the an ath bar the an for and sand thal bard theand hand hand
+The thear al brer the alllll all all thand ale sond theall thar sere
+Thar shard sor that shand hal al hangh the so he
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou art, sor, me ath thathe and brind weanck hat thave this to hyor,
+
+Mand by ar bal therath mar athe shes mards angh toull thy hang, allly
+And haten, hear hange wat athigh atht a by bereand tar angange him sat sat hen sath my
+The so heat alo hyo my heen thin har mand,
+Thill thar sas the satheang atous, thy therere that see hearend,
+Tha thar har and so sit that sand shit and she save hate mas alld thon
+Thous mallllin har aral this herear shaldse thaten thand thang,
+That han thind athis, ath bal hang he
+
+DANIEL: Ay, my dear, we ther by, wous soun a her ton wo athat.
+
+
+LARDTES:
+LOMELE:
+ME:
+BENO, my sand mis thave theren at, wit sund.
+
+
+
+
+
+
+
+
+
+
+CINGUS:
+
+TERO:
+MENUSTICO:
+TARENONGOMER:
+CICO:
+NGBENG VI ENGONTET:
+Tor, sor, myot sa t that and, ar sateng my
+
+Thalldalll at bavert thard, a sear haveden ateng a theate sofe,
+Tave tho son han thot me tit ath andat thee thee
+Wous to tit thand arend, hatiler thy ang,
+Thath thar singh mend, thard, willle wou me wal hee
+
+No at hat har sang halllllleard hors to hath thingh his ser a
+    -----------------------------------------------------
+    vt_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 700
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+
+The shes, aseng the ant shalst bore ases o to som sa shing,
+A dis thing maved wou songes at,
+Ar wo thar moung thordisthe buncert male a sore
+Whandear fe alll thee sis, sare so sou sand shy an ho a ar hath a heraver,
+With ande a theneent sar hilave and ath so seeat, beng thit tat the
+Whard at benerallllar bot tour aren a tha as ath sou her tor sus seaver
+That sis tra toreene hand seeere wing thange sa ther ta min manch to ancer
+Whard thard tou sear as thear shore shave salld
+Tor haldsprall to sh
+
+    Nucleus (0.5) (500 max_tokens):
+    
+MINIO:
+
+MELENTET:
+My you ment he mat tore thang buther hare.
+
+
+MELINT:
+Bus mat and mand you sat the shant shat sthat bea shat shat athe
+The athe sheat shalll are atheat sou and ther the
+
+Thand theand sat athe math sou thar the thar hen athe thare sof sher,
+Thar fou hat ther my ath ard thar ther ath she athe
+The brer fo the an ath ber ther ath thand therser and ance thange
+The tha the thear as bre thar athe the ath bur sher.
+
+
+
+
+CENUKENTETET:
+There ast my my there so so and, a so shangh the so he
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou art, be ank bak bund,
+Then geat hath heath tort, thill fon hyor thith.
+
+
+LOLETEN:
+Nomy band my sil this, bys a brat all thy a and,
+Thersthoulle,
+As, arand, wen that thatight a by bereand tar angange hithe
+Wot thand sath my ar to a mat a ath athtill thilll
+Whe the sit that bre sar thillllow andisth anthe therere that
+Thith thenderens thather fror so sim to tha bat then tous alld by tho me halt
+A so santheale ath so this alor trithtear shald
+Thond bat thanger hat that tha thinghath, beath mal hang he
+
+DANIEL: Ay, my dear, we ther by, meeand an a her you,
+And have and mand ath toul ar mu ar bars sangore
+And that tren at brave tha sea ton a she thars tha ath atheate tilthe
+Tha harer hear hyow hat that thee tor hen thereat,
+Whilll fris mer are ard trat alis and at bale
+Then athea bear havesens ting a theate shal thars tho son to ale thee
+Tit ath andath bur thee toure ath to hand arene
+Thatill hen asthard ath thar singh shaveater sof my
+Ther so a my and brat atand, athard ther toulle
+Thathand ber as thinth tor ser a
+    -----------------------------------------------------
+    vt_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 800
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+
+The shes, aseng the ant the so to a dees a tus and
+a henes, the he thean fat a thouseals tor
+Ar wo thar moung thord byse buncer thale a sore supreer ate ath theee
+With sithe to tho and shy an bof thire hall that tris sencke
+And wheneeer sur supave a frart so sofer, ben a tit ber the
+Whard at benerallllar be thall an ber thar sunce sof the to tous seavest and
+Nrear thereee sof sof shere hing thange sa ther ta bur barth to as shat ard
+And an fand areave art a to beere sis ofere
+The theath to sor 
+
+    Nucleus (0.5) (500 max_tokens):
+    
+ORUS:
+The and to non and the and wit to she an me pof hear the for ber he fald
+ald pand and she the so ath the sore sur ben at so theave.
+
+
+CENTING ERD:
+Bot ther an sou sof and sis so bear mard sis seald a sthard
+There the the thar ath an theat sis ber frear ance shalll
+Whe her thalll thar bre thalll that there wour be wo the
+Thar my ther ath thar ath thar a bean theare a sther seath the
+Whalll shave there the and ber sher that pand thalll thave
+That ith bre so me so shaver an a shat athee surs
+
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou art, be an to at thathe and by ave henck
+An met at thangte he be asthave ber bave feprthand and,
+Thy shath sis brat a a thareaver ar thealld seper
+Thart andeer to a bre anth a bund tous aner and sunde theat thild thy
+Thath ar to a mat ancer as trer of meave thous sit that bre
+War thilll beallllot sinth seavit sut and ath at
+Thave thith shill and so sim to tro balll ber
+Norse shee thil bee antis sof too buteat thinger,
+Bust thereerear shald an bateat than that trealt thavtie
+Whath beerath athe and t
+
+DANIEL: Ay, my dear, we ther by, put as an a the ton to athe.
+
+
+MELIUS:
+And gor thy mu bran foustean be bupes therer at brave and.
+
+
+Than sish theard thard sist a that mithe sur, and a ar bere
+Nat that a sepe bus asthereat a tilll bris ferteate as
+Trat and a theat brarst that thal ane ta asencereat a theate
+Note thars tho son to a the thatir ath andate bur the
+Whe sendit to sane a tinge andear thy and,
+Whith thar singh meneeat myst therave tin a bereat brat ato a both bun
+That as there ton an shat athintand sand to
+    -----------------------------------------------------
+    vt_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 900
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+Mare shes, ash at be ant thel the be ase the whallds wit.
+PAUSENENTE:
+Man yham wou bunges bere and and thisen.
+
+MELY Myou bomand thale bealte sith tar tene thiteee sench sure.
+
+NORKINCING:
+
+
+No, sethis me shat shy shasing and, be as ther sur suprereand
+
+Nowis speer, ber a tit ito ther to supp be wof thave
+Wit to ther ber thas spee ande the to surs sencer
+That sis tro to my sexand seeere winel a spatit ther ta bur be that are
+That arave a an dand areaves ange to bee to bralld
+To thalll thil to se
+
+    Nucleus (0.5) (500 max_tokens):
+    
+Met so he bus to of sull for ast make.
+
+
+
+KIN:
+Whathe bear the mest the he she alll and angllles a to ant there
+that a mere and an and ther and sof she there and a and ther
+Wit ther there a seee sen beat a sprat so there with beeer
+That ith there sof ren in the the surs beree a dor and
+The the thalll thave pries ber be wit preat a winge that thald
+What so bre sun the sof and that the the the with low the so depere
+That the that pre and with beare wis bre prith preall shaves prises sen
+That surs 
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou art, be a me ast thathated that hate cre cre tor to ang
+To be be ast bust ancear therst and and the beate
+To a that a a thaveaver ar theall brees, thart and
+To thit tre anth a bund seas aner andave sepeas to apld thy
+That and to a beat bear and the of meave thound, wat an bre
+Whe the sof ta thisth in that asere to to a my to there
+Theallle wille so so an ance balll ber bover thee
+Noul bee antis so beat butalll brure with thilld arer as and
+Fit ande thas applow, that the to as a tisee
+What the fish 
+
+DANIEL: Ay, my dear, we the shald, the wing by and,
+Nou wis con an mand sto to therem to f mof seeave.
+
+
+MARDWAUS:
+Ond, bre a that, a to an she thers thas, sist thee willt she
+Thater seer by by a thille fre to sur sinere thath that.
+
+
+SININ:
+
+No, my, so mis and an brord and, thealdere theate site.
+
+
+NUK:
+Got the thar, tho so sis a bot thatir ato and.-
+
+
+
+NoNTIV:
+
+Teen, tit that an tin, shat she thave a dorer thee singh menee
+Wer sof my ant tin a ber ance a sen wo a that and.
+
+
+NUS:
+That, and, an as thin and sheer, 
+    -----------------------------------------------------
+    vt_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 1000
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+
+The shes, ash gons my this the fore lees a to som sust
+And thends thied ifhald thou to britir.
+
+SIO:
+
+Cace and, thalllle bomand thalll so an supleer ben a priteee
+Witht ithe wo a that ish son bore ande this thatis a sing.
+
+
+CUK:
+
+Tit no shith andeen witil so sthe with sheall wer thitht meating ter
+Now ar to my lis the a thas sine ande a thie.
+GUKENT:
+
+Do, my sis my soree, so and sise bow mald, so hig ther ta bur mart
+Not, shis thar betis my to bureave arer those she
+The sis a beaversst susen se
+
+    Nucleus (0.5) (500 max_tokens):
+    
+OMENTIO:
+Whe to now, and with that the the so gong.
+
+
+MENTERE:
+The be, me the the thand the she the so bestereat the cre cald
+Whe the sis that she as sen and and a and to so beseese
+The she she wis sunce and to the the the the thave the the there spre
+What thave and an the sis suple wene with an the thee
+That she that the wou and be and that the spreavesere
+Thave the she and that the the the with thee andere andees.
+
+
+DUK:
+No, the the sis so sis she my ling the and in thatere
+Nom my and ithe the
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou art, be a me ast thathaten geate, wever,
+An my a to bus to byou thith.
+
+SIO:
+The the my to reat the comy gos a bre will thy a and,
+The senou heence that my wen to a ser with a this seas aner and sunde the
+Wo my asperat and a so an mat incer and the thille
+Whe in wing that bre she thies, that and win thy lis weer.
+
+
+DUKIN:
+
+
+NG INT:
+Nomes my and, so mit to tho malll be to she shee thil me sinte the
+Os theate astis tror to thilld arear whaldsere ande thas and
+Thart ato havere wo a ande and a thatish 
+
+DANIEL: Ay, my dear, we the shat meeat my and to mon.
+
+DUTENVESBET:
+Nomant, meallll I'd that my thave beatht at ther and mat sunchee
+That sist to sprit as thisteere thillles surt and a ar brith a mithteer.
+
+
+KENCIN:
+Ne:
+To the the whis me thast as tris and a the there spather tea bear thease
+Witene a theate sof mealll will be in a bove breare to and
+With that tore senceatis sher a tinge withere thave
+That thit me sine wo aneater sof my aner brove an ance
+Whit and botins and a to andere toner thil sepene
+The inde th
+    -----------------------------------------------------
+    
