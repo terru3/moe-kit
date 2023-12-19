@@ -15,6 +15,3 @@ def set_seed(seed=42):
     # torch.cuda.manual_seed_all(seed) # if multi-GPU
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-
-
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")

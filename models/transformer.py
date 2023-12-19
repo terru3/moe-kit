@@ -1,6 +1,6 @@
 ### TODOs:
 # more documentation
-# More switch features (see below) such as selective precision and (smaller) weight initialization
+# More features (see below) such as (smaller) weight initialization
 
 ## Imports
 import copy
@@ -98,17 +98,21 @@ class SwitchFeedForward(nn.Module):
         self,
         d_model,
         n_ff,
+        use_amp,
         capacity_factor,
         drop_tokens: bool,
-        n_experts,
+        n_experts: int,
         expert: MLP,
+        noise=0.1,
         dropout=0.1,
     ):
         super().__init__()
 
+        self.use_amp = use_amp
         self.capacity_factor = capacity_factor
         self.n_experts = n_experts
         self.drop_tokens = drop_tokens
+        self.noise = noise
 
         self.experts = nn.ModuleList(
             [copy.deepcopy(expert(d_model, n_ff, dropout)) for _ in range(n_experts)]
@@ -118,9 +122,22 @@ class SwitchFeedForward(nn.Module):
         self.switch = nn.Linear(d_model, n_experts)
 
     def forward(self, x):
+
+        x = x.float()  # cast to float32 for stability
         B, S, n_embd = x.shape
+
+        # apply multiplicative jitter
+        if self.noise > 0:
+            x *= torch.empty_like(x).uniform_(1.0 - self.noise, 1.0 + self.noise)
+
         x = rearrange(x, "b s d -> (b s) d")
         probs = F.softmax(self.switch(x), dim=-1)  # (b*s) x n_experts
+
+        # convert to half precision
+        if self.use_amp:
+            probs = probs.half()
+            x = x.half()
+
         max_prob, route_idx = torch.max(probs, dim=-1)
 
         # compute expert capacity
@@ -178,11 +195,13 @@ class Block(nn.Module):
         n_embd,
         n_head,
         n_ff,
+        use_amp,
         switch,
         capacity_factor,
         drop_tokens,
         n_experts,
         expert,
+        noise=0.1,
         mlp_dropout=0.1,
         expert_dropout=0.4,
     ):
@@ -192,10 +211,12 @@ class Block(nn.Module):
             self.ff = SwitchFeedForward(
                 n_embd,
                 n_ff,
+                use_amp,
                 capacity_factor,
                 drop_tokens,
                 n_experts,
                 expert=MLP,
+                noise=noise,
                 dropout=mlp_dropout,
             )  # no change to dropout here
         else:
@@ -254,7 +275,6 @@ class PositionalEncoding(nn.Module):
 
 
 ### TODO:
-### -Selective precision
 ### -Smaller weight initialization
 
 
@@ -273,11 +293,13 @@ class Transformer(nn.Module):
         n_ff,
         n_layer,
         device,
-        switch,
+        use_amp=False,
+        switch=False,
         capacity_factor=None,
         drop_tokens=None,
         n_experts=None,
         expert=None,
+        noise=0.1,
         mlp_dropout=0.1,
         expert_dropout=0.4,
     ):
@@ -305,11 +327,13 @@ class Transformer(nn.Module):
                     n_embd,
                     n_head,
                     n_ff,
+                    use_amp,
                     switch_args[i],
                     capacity_factor,
                     drop_tokens,
                     n_experts,
                     expert,
+                    noise,
                     mlp_dropout,
                     expert_dropout,
                 )
@@ -322,6 +346,7 @@ class Transformer(nn.Module):
         self.switch = switch
         self.seq_length = seq_length
         self.device = device
+        self.use_amp = use_amp
         self.init_params()
 
     # weight initialization (Xavier uniform)
@@ -400,10 +425,15 @@ class Transformer(nn.Module):
                 text_cond = input_ids[:, -self.seq_length :]
                 # ii) Retrieve predictions
                 with torch.no_grad():
-                    if self.switch:
-                        logits, _, _, _ = self(text_cond)
-                    else:
-                        logits = self(text_cond)
+                    with torch.autocast(
+                        device_type=self.device.type,
+                        dtype=torch.bfloat16,
+                        enabled=self.use_amp,
+                    ):
+                        if self.switch:
+                            logits, _, _, _ = self(text_cond)
+                        else:
+                            logits = self(text_cond)
                 # model output: (B, S, vocab_size)
                 # iii) Find last token logits of each
                 logits = logits[:, -1, :]  # (B, vocab_size)
