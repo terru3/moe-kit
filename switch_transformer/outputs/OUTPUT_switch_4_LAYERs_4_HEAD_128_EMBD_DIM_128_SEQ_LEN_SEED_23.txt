@@ -1,0 +1,114 @@
+switch_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 250
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+
+Are  coor oooto thelanttsst sond bateses m man m win m bes tounderthe an withilouneselle t thirer toulir seng t terllore bour athes w b wore ssessearate alllllese serol lallel soulland ssss wind t ararathilan s tor thind angor sens tene sthan anerouss arl s astele toung thit wer therer seras we wes thand boulathe alle s cis as athinde t the bend se woust thes tele t torelon winsousel bowinlland and ase as tat arorales toras llendarale aran thes arerarorllererore s te thalllllloulalessthel toron
+
+    Nucleus (0.5) (500 max_tokens):
+    
+ing sother s athend s thinde out manenore t moun me s there the manderere ben s s thend thillle t t sore there s ther t ben courlare lesthe ce solllllleralll ler thesous souson lerour bll ans t s s sellelelel balerathell wisel tor thend t the tor sound wang t se an sthesend tor thalerone won ll atoular and the thelllle worl werourel l t t l athalatoulere t allllllellllleller the t worerel all bend tore chand lllllllll s bengansthand theror thalere sour lller llerous s lant tous merthanthe the th
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou artherst ke w at t s the d thatas we s t b borth t thisote we s t banelat as bal tothe bllle westhe wisteris anor t wourlel wangelealleralllllessss taralangelllllallore wind cher s sellangerounssoundesthengot t t t se boulan s son bat we blllant we wond,
+
+
+CAlland,
+Thille the sss the soure angoutorongel terlell t ben win atathelllllllllend walle sowis we tero bll t barous sel t be tourelesel withowotounsorelasthir t werouthalllarerares allin terenst tantathangoresst the tor sowathoundathan tesorlle
+
+DANIEL: Ay, my dear, we tsth warereeanourid d t thon won borele ander mandout alerteng bl b thestend be blengotherenor wire b thanest t wan sthe bllllilasoun asterer t athes sthil ar sesonensthen t thout se t bell stherenonout thas wis sestererarongand cer allllle balest ther tes bere tarasessorene alandatoun te talas waras bll alle w tellire towelastotour thelore send t towhane arenest wines wel astharond th boulliner sender thest w llaler bor we t arellat at wor bllles t welllourelen tonowol cator s bland wand te
+    -----------------------------------------------------
+    switch_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 500
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+Ans thaso hesong thes so withir wour mees winghal win me shast s senen t manear thon to soulorirer d
+An miseng t teallase m mandites m o wore shes darore mall te s se han thyoun tho toulllll mind t tharathil thowis t s wine wor send ther seran dandend.
+
+
+IUSENGURGENENGUThe E:
+Wer therer meras we wes thand bo myour the thar s te me shour t wherend se woust thes te wathere
+And windise win winorind we dase me th minoranth to tharind wenge toun d
+As mendarore tishowe s te thalleller t thesthin d the
+
+    Nucleus (0.5) (500 max_tokens):
+    
+Whe meat hes me tore the tofous me therore soure tond hend this man there the s sererer thand me t the is there shand to f thaserourere
+
+The thas s s shasore de mather t souso theso thesor mare s thas wo thatharon se
+Whe me the she d thane de tor sour s wharo se on our thendes meso than then me mond thes seseseserd
+
+Whe s wourer we s there there s marousord s s wen thashe so thase we tous thandend tore mes the thas se s dond mathand the meror were sour s mengonde d the mand d s meron tore me d t
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou art sesouse wastit s thind thato wone thin tore, teshis te we s thithalll menes
+Wor my wand and the wis aris t or toularond wenge s sthe ond seshishe t share
+Ther tour tingr s this teand meroun tounde mas towat d thatharis the son math thando merer thilland w mandere than the she the soure weris
+Whinden thelell t sto who marendellld thasher mane sowis we ouro tor mienenes se s thy tilonde s tisthowond myore te
+Wourer s be thericherares mende terene t manger thereser sthithind
+
+Whisendou mathes my t
+
+DANIEL: Ay, my dear, we ther ware, thes wind wer mone on torere matere anto m aler wer than moustend te t isof sere
+Ant wis s thane mer t o she thare t owoun owe ser tilares
+For t me he s whithen mithou the t this shelontont t thas wiseres wisengong
+Bu ter warathe malest ther tes sere theases whene wen soust the tharo thowise t male d me tie these matord w the myousend titowhane m tendo wines we t shas onder thye sther mender theso wind mer d me malend me withano th s s me malllowiterd
+Tondan sha se tinondowonder, 
+    -----------------------------------------------------
+    switch_4_LAYERs_4_HEAD_128_EMBD_DIM_128_SEQ_LEN Output, Step 750
+    UNCONDITIONAL GENERATION:
+
+    Top-k (5) (500 max_tokens):
+    
+And this bers tour thant the hend be mees
+But war win thiss to me mane t mane mard
+Monge the tith thes is meande that
+Whe mour athes me soure shes ticken ash the bo thit these
+Thours thish son bo tith bathes tho tor thind tower seas ther sur sulleres
+And this stee tof my thie ber thorst mears be tral ange
+Wit tour the thar sute he bure the tof sus he ous
+Tout wis wat tore the tof se dre dint thange ston be tat
+To be me tof shor thar bee she mand arit,
+The tish shee to be sthie bul thesthe ound b
+
+    Nucleus (0.5) (500 max_tokens):
+    
+ARUS:
+Wher we the thand the the mand tot me mere torer tore the man there the send
+Bo the me the than the the at the tof shat sheare ang we my she thent sof
+The mat sour she be ther theas a s the thald the se bererd ther wit
+There wit hat the the sof se he wof me shears
+Wof mer thare me here me mend thease the thend be the
+Theat bear ther my thas therere win be ben thase ond thas
+The the mas wous me mean so and me ber songe thathe theall ther sof
+Ther me mer sour dous thand be as ben hare the he
+
+    #####################################################
+    CONDITIONAL GENERATION (Top-k (5), 500 max_tokens):
+    KING TERRY: Thou art, bord me thant shes to that suse sin my mes
+And, thote he she manth, tour so to my thourd thing there
+This that wou tea s the bust, thoulless, tharthe, wen tou sor tithe a bule teand ter
+Terange mim sha the the se bour the sof mat be be o mered this
+And thous mit the tere she the soured this
+Whinthene hit sthast bur bearenderers thas brices
+Wofas mat ourd of sour mimas all the tou me simy
+Athom thous mar sour tror tout there thares as
+Is thatest than thangerter thes tof ho thises
+Whart than my 
+
+DANIEL: Ay, my dear, woutst, ware, ther be my trat, tho wistere ane my anto meat wing tor
+Thoul than be the son trend to mat sund tha ton so the blle thow,
+Thyo whe thinghes sthinger he she to he mith be se tof mend were thast thaser,
+I me waseng my wis mis that the berices, thean ane hard.
+
+GUCINGENGUS:
+Tou the thare tho son thar the me the the and,
+And wath tore send tof bener a tices beres o be ang thof thande
+Whyom mende tho sof merse mour as thend meat thand, bus bung, thind,
+Wheath mean hou se tinth hous trow
+    -----------------------------------------------------
+    
