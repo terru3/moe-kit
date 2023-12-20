@@ -195,6 +195,7 @@ class Block(nn.Module):
         n_embd,
         n_head,
         n_ff,
+        norm_first,
         use_amp,
         switch,
         capacity_factor,
@@ -224,21 +225,32 @@ class Block(nn.Module):
 
         self.ln1 = nn.LayerNorm(n_embd)
         self.ln2 = nn.LayerNorm(n_embd)
+        self.norm_first = norm_first
         self.mlp_drop = nn.Dropout(p=mlp_dropout)
         self.expert_drop = nn.Dropout(p=expert_dropout)
         self.switch = switch
 
     def forward(self, x, mask):
         # residual connection (stream)
+        
         # pre layer norm
-        x = x + self.mlp_drop(self.sa(self.ln1(x), mask))
-
-        if self.switch:
-            out, expert_token_counts, prob_sum, n_dropped = self.ff(self.ln2(x))
-            x = x + self.expert_drop(out)  # expert dropout
-            return x, expert_token_counts, prob_sum, n_dropped
+        if self.norm_first:
+            x = x + self.mlp_drop(self.sa(self.ln1(x), mask))
+            if self.switch:
+                out, expert_token_counts, prob_sum, n_dropped = self.ff(self.ln2(x))
+                x = x + self.expert_drop(out)  # expert dropout
+                return x, expert_token_counts, prob_sum, n_dropped
+            else:
+                x = x + self.mlp_drop(self.ff(self.ln2(x)))
         else:
-            x = x + self.mlp_drop(self.ff(self.ln2(x)))
+            x = self.ln1(x + self.mlp_drop(self.sa(x, mask)))
+            if self.switch:
+                out, expert_token_counts, prob_sum, n_dropped = self.ff(x)
+                x = self.ln1(x + self.expert_drop(out))  # expert dropout
+                return x, expert_token_counts, prob_sum, n_dropped
+            else:
+                x = self.ln2(x + self.mlp_drop(self.ff(x)))
+            
         return x
 
 
@@ -276,7 +288,7 @@ class PositionalEncoding(nn.Module):
 
 ### TODO:
 ### -Smaller weight initialization
-
+### -Allow for switch layers to be layers 1/3/5 vs. 2/4/6 via switch_first=True
 
 class Transformer(nn.Module):
     """
@@ -293,6 +305,7 @@ class Transformer(nn.Module):
         n_ff,
         n_layer,
         device,
+        norm_first=True,
         use_amp=False,
         switch=False,
         capacity_factor=None,
@@ -327,6 +340,7 @@ class Transformer(nn.Module):
                     n_embd,
                     n_head,
                     n_ff,
+                    norm_first,
                     use_amp,
                     switch_args[i],
                     capacity_factor,
