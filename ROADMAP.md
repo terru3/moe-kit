@@ -6,18 +6,20 @@ _Updated: 14 Dec 2023, 23:20 GMT_
 
 ## MoE Toolkit
 
-| Status | Item                                                                    |
-| :----: | :---------------------------------------------------------------------- |
-|   ✔    | Create README and ROADMAP                                               |
-|   ✔    | Write vanilla autoregressive transformer                                |
-|   ✔    | Implement Switch Transformer                                            |
-|   ✔    | Implement expert dropout                                                |
-|   ✔    | Implement automatic mixed precision (AMP) training                      |
-|   ✔    | Implement functionality for pre vs. post layer norm                     |
-|   ❌   | Implement functionality for Switch layer alternating 1/3/5 vs. 2/4/6    |
-|   ❌   | Implement smaller Switch weight initialization                          |
-|   ❌   | Hyperparameter sweeps via wandb                                         |
-|   ❌   | Implement Switch on attention (QKV) layers                              |
-|   ❌   | Implement other MoE paradigms such as expert-choice routing and ST-MoE  |
-|   ❌   | Train longer on TinyShakespeare, monitor performance and training time  |
-|   ❌   | Implement multi-query attention (MQA) and grouped query attention (GQA) |
+| Status | Item                                                                                                               |
+| :----: | :----------------------------------------------------------------------------------------------------------------- |
+|   ✔    | Create README and ROADMAP                                                                                          |
+|   ✔    | Write vanilla autoregressive transformer                                                                           |
+|   ✔    | Implement Switch Transformer                                                                                       |
+|   ✔    | Implement expert dropout                                                                                           |
+|   ✔    | Implement automatic mixed precision (AMP) training                                                                 |
+|   ✔    | Implement functionality for pre vs. post layer norm                                                                |
+|   ❌   | Implement switch_first=True whether to begin with a Switch layer                                                   |
+|   ❌   | Implement every_n_switch=2 for Switch layer frequency                                                              |
+|   ❌   | Implement smaller Switch weight initialization                                                                     |
+|   ❌   | Implement the original sparse MoE (SMoE) (Shazeer et al. 2017)                                                     |
+|   ❌   | Hyperparameter sweeps via wandb                                                                                    |
+|   ❌   | Implement other MoE paradigms such as expert-choice routing, PR-MoE (one fixed MLP + more experts in later layers) |
+|   ❌   | Train longer on TinyShakespeare, monitor performance and training time                                             |
+|   ❌   | Consider implementing multi-query attention (MQA) and grouped query attention (GQA)                                |
+|   ❌   | Implement MoE on attention (QKV) layers or heads (e.g. MoA (Zhang et al.))                                         |
