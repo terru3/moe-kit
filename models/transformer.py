@@ -4,6 +4,7 @@
 
 ## Imports
 import copy
+import warnings
 
 import numpy as np
 import torch
@@ -232,7 +233,7 @@ class Block(nn.Module):
 
     def forward(self, x, mask):
         # residual connection (stream)
-        
+
         # pre layer norm
         if self.norm_first:
             x = x + self.mlp_drop(self.sa(self.ln1(x), mask))
@@ -250,7 +251,7 @@ class Block(nn.Module):
                 return x, expert_token_counts, prob_sum, n_dropped
             else:
                 x = self.ln2(x + self.mlp_drop(self.ff(x)))
-            
+
         return x
 
 
@@ -286,14 +287,13 @@ class PositionalEncoding(nn.Module):
         return self.pe[: x.size(0)]
 
 
-### TODO:
-### -Smaller weight initialization
-### -Allow for switch layers to be layers 1/3/5 vs. 2/4/6 via switch_first=True
-
 class Transformer(nn.Module):
     """
     TODO
-    switch (bool): Indicates whether to insert Switch MoE layers
+    Inputs:
+        -switch (bool): Indicates whether to insert Switch MoE layers.
+        -switch_first (bool): Indicates whether to use a Switch layer in the first block.
+        -every_n_switch (int): Frequency to insert Switch layers.
     """
 
     def __init__(
@@ -308,6 +308,8 @@ class Transformer(nn.Module):
         norm_first=True,
         use_amp=False,
         switch=False,
+        switch_first=None,
+        every_n_switch=None,
         capacity_factor=None,
         drop_tokens=None,
         n_experts=None,
@@ -320,11 +322,13 @@ class Transformer(nn.Module):
 
         if switch:
             assert (
-                isinstance(capacity_factor, (int, float))
+                isinstance(switch_first, bool)
+                and isinstance(every_n_switch, int)
+                and isinstance(capacity_factor, (int, float))
                 and isinstance(drop_tokens, bool)
                 and isinstance(n_experts, int)
                 and expert is not None
-            ), "For a switch transformer, you must provide a numeric `capacity_factor`, boolean `drop_tokens`, \
+            ), "For a switch transformer, you must provide a boolean `switch_first`, integer `every_n_switch`, numeric `capacity_factor`, boolean `drop_tokens`, \
                     integer `n_experts` and a MLP class `expert` to serve as the experts."
 
         self.token_embedding = nn.Embedding(vocab_size, n_embd)
@@ -332,8 +336,20 @@ class Transformer(nn.Module):
 
         ### Alternate blocks with switch = True/False
         switch_args = np.full((n_layer,), False)
-        if switch:
-            switch_args[::2], switch_args[1::2] = True, False
+        switch_args[0] = switch_first
+
+        if switch_first:
+            switch_args[(every_n_switch)::every_n_switch] = True
+        else:
+            switch_args[(every_n_switch - 1) :: every_n_switch] = True
+            # in the case that switch
+            if every_n_switch == 1:
+                switch_args[0] = False
+                warnings.warn(
+                    "switch_first=False, but every_n_switch=1. This sets the first layer to a regular MLP and all other layers to Switch layers, and may not be the intended behaviour.",
+                    stacklevel=2,
+                )
+
         self.blocks = nn.Sequential(
             *[
                 Block(
