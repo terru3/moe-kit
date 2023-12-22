@@ -261,8 +261,7 @@ class PositionalEncoding(nn.Module):
     PE(pos, 2i (even)) = sin(pos/(10000^{2i/d_model}))
     PE(pos, 2i+1 (odd)) = cos(pos/(10000^{2i/d_model}))
 
-    See reference for more details:
-    https://kikaben.com/transformers-positional-encoding/
+    https://arxiv.org/abs/1706.03762
     """
 
     def __init__(self, d_model, max_len):
@@ -291,9 +290,29 @@ class Transformer(nn.Module):
     """
     TODO
     Inputs:
-        -switch (bool): Indicates whether to insert Switch MoE layers.
+        -vocab_size (int)
+        -seq_length (int)
+        -n_embd (int)
+        -n_head (int):
+        -n_ff:
+        -n_layer (int):
+        -device:
+        -norm_first (bool=True):
+        -use_amp (bool=False):
+        -switch (bool=False): Indicates whether to insert Switch MoE layers.
         -switch_first (bool): Indicates whether to use a Switch layer in the first block.
         -every_n_switch (int): Frequency to insert Switch layers.
+        -capacity_factor (float):
+        -drop_tokens (bool):
+        -n_experts (int):
+        -expert:
+        -noise (float):
+        -mlp_dropout (float):
+        -expert_dropout (float):
+    Returns:
+        -
+
+    Switch Transformer: https://arxiv.org/abs/2101.03961
     """
 
     def __init__(
@@ -331,6 +350,13 @@ class Transformer(nn.Module):
             ), "For a switch transformer, you must provide a boolean `switch_first`, integer `every_n_switch`, numeric `capacity_factor`, boolean `drop_tokens`, \
                     integer `n_experts` and a MLP class `expert` to serve as the experts."
 
+        assert (
+            isinstance(mlp_dropout, (int, float))
+            and isinstance(expert_dropout, (int, float))
+            and 0 <= mlp_dropout <= 1
+            and 0 <= expert_dropout <= 1
+        ), "`mlp_dropout` and `expert_dropout` must be numeric values between 0 and 1 (inclusive)."
+
         self.token_embedding = nn.Embedding(vocab_size, n_embd)
         self.position_embedding = PositionalEncoding(n_embd, seq_length)
 
@@ -342,7 +368,6 @@ class Transformer(nn.Module):
             switch_args[(every_n_switch)::every_n_switch] = True
         else:
             switch_args[(every_n_switch - 1) :: every_n_switch] = True
-            # in the case that switch
             if every_n_switch == 1:
                 switch_args[0] = False
                 warnings.warn(
