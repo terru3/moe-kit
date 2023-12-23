@@ -13,13 +13,26 @@ import torch.nn.functional as F
 
 from einops import rearrange
 
+## util fn
+def softmax_off_by_one(x, dim):
+    e_x = torch.exp(x - torch.amax(x, dim=dim, keepdim=True)[0])
+    return e_x / (1 + e_x.sum(dim=dim, keepdim=True))
+
+
+## activation mappings
+act_fn_dict = {"GELU": nn.GELU()}
+## TODO: add more
+
 ## Model
 class MLP(nn.Module):
-    def __init__(self, n_embd, n_ff, dropout=0.1):
+    def __init__(self, n_embd, n_ff, activation, dropout=0.1):
         super().__init__()
+
+        act_fn = act_fn_dict[activation]
+
         self.net = nn.Sequential(
             nn.Linear(n_embd, n_ff),
-            nn.GELU(),
+            act_fn,
             nn.Dropout(p=dropout),
             nn.Linear(n_ff, n_embd),
         )
@@ -29,7 +42,7 @@ class MLP(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, n_embd, n_head, dropout=0.1):
+    def __init__(self, n_embd, n_head, softmax_off_by_one, dropout=0.1):
         super().__init__()
 
         self.n_embd = n_embd
@@ -37,7 +50,7 @@ class MultiHeadAttention(nn.Module):
         self.head_dim = (
             n_embd // n_head
         )  # Dimension of each head's key, query, and value
-
+        self.softmax_off_by_one = softmax_off_by_one
         self.drop = nn.Dropout(p=dropout)
 
         self.query = nn.Linear(n_embd, n_embd, bias=False)
@@ -63,7 +76,11 @@ class MultiHeadAttention(nn.Module):
         # mask is [B, 1, S, S]
         if mask is not None:
             wei = wei.masked_fill(mask, float("-inf"))
-        wei = dropout(F.softmax(wei, dim=-1))
+
+        if self.softmax_off_by_one:
+            wei = dropout(softmax_off_by_one(wei, dim=-1))
+        else:
+            wei = dropout(F.softmax(wei, dim=-1))
         out = wei @ v
         return out
 
@@ -104,6 +121,7 @@ class SwitchFeedForward(nn.Module):
         drop_tokens: bool,
         n_experts: int,
         expert: MLP,
+        activation,
         noise=0.1,
         dropout=0.1,
     ):
@@ -116,7 +134,10 @@ class SwitchFeedForward(nn.Module):
         self.noise = noise
 
         self.experts = nn.ModuleList(
-            [copy.deepcopy(expert(d_model, n_ff, dropout)) for _ in range(n_experts)]
+            [
+                copy.deepcopy(expert(d_model, n_ff, activation, dropout))
+                for _ in range(n_experts)
+            ]
         )
 
         # Routing layer
@@ -203,12 +224,14 @@ class Block(nn.Module):
         drop_tokens,
         n_experts,
         expert,
+        softmax_off_by_one,
+        activation,
         noise=0.1,
         mlp_dropout=0.1,
         expert_dropout=0.4,
     ):
         super().__init__()
-        self.sa = MultiHeadAttention(n_embd, n_head, mlp_dropout)
+        self.sa = MultiHeadAttention(n_embd, n_head, softmax_off_by_one, mlp_dropout)
         if switch:
             self.ff = SwitchFeedForward(
                 n_embd,
@@ -218,11 +241,12 @@ class Block(nn.Module):
                 drop_tokens,
                 n_experts,
                 expert=MLP,
+                activation=activation,
                 noise=noise,
                 dropout=mlp_dropout,
             )  # no change to dropout here
         else:
-            self.ff = MLP(n_embd, n_ff, dropout=mlp_dropout)
+            self.ff = MLP(n_embd, n_ff, activation=activation, dropout=mlp_dropout)
 
         self.ln1 = nn.LayerNorm(n_embd)
         self.ln2 = nn.LayerNorm(n_embd)
@@ -298,6 +322,7 @@ class Transformer(nn.Module):
         -n_layer (int):
         -device:
         -norm_first (bool=True):
+        -softmax_off_by_one (bool):
         -use_amp (bool=False):
         -switch (bool=False): Indicates whether to insert Switch MoE layers.
         -switch_first (bool): Indicates whether to use a Switch layer in the first block.
@@ -306,6 +331,7 @@ class Transformer(nn.Module):
         -drop_tokens (bool):
         -n_experts (int):
         -expert:
+        -activation (str):
         -noise (float):
         -mlp_dropout (float):
         -expert_dropout (float):
@@ -325,6 +351,7 @@ class Transformer(nn.Module):
         n_layer,
         device,
         norm_first=True,
+        softmax_off_by_one=False,
         use_amp=False,
         switch=False,
         switch_first=None,
@@ -333,6 +360,7 @@ class Transformer(nn.Module):
         drop_tokens=None,
         n_experts=None,
         expert=None,
+        activation="GELU",
         noise=0.1,
         mlp_dropout=0.1,
         expert_dropout=0.4,
@@ -362,18 +390,18 @@ class Transformer(nn.Module):
 
         ### Alternate blocks with switch = True/False
         switch_args = np.full((n_layer,), False)
-        switch_args[0] = switch_first
-
-        if switch_first:
-            switch_args[(every_n_switch)::every_n_switch] = True
-        else:
-            switch_args[(every_n_switch - 1) :: every_n_switch] = True
-            if every_n_switch == 1:
-                switch_args[0] = False
-                warnings.warn(
-                    "switch_first=False, but every_n_switch=1. This sets the first layer to a regular MLP and all other layers to Switch layers, and may not be the intended behaviour.",
-                    stacklevel=2,
-                )
+        if switch:
+            switch_args[0] = switch_first
+            if switch_first:
+                switch_args[(every_n_switch)::every_n_switch] = True
+            else:
+                switch_args[(every_n_switch - 1) :: every_n_switch] = True
+                if every_n_switch == 1:
+                    switch_args[0] = False
+                    warnings.warn(
+                        "switch_first=False, but every_n_switch=1. This sets the first layer to a regular MLP and all other layers to Switch layers, and may not be the intended behaviour.",
+                        stacklevel=2,
+                    )
 
         self.blocks = nn.Sequential(
             *[
@@ -388,6 +416,8 @@ class Transformer(nn.Module):
                     drop_tokens,
                     n_experts,
                     expert,
+                    softmax_off_by_one,
+                    activation,
                     noise,
                     mlp_dropout,
                     expert_dropout,
