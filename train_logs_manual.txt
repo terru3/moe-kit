@@ -1,0 +1,5 @@
+## This file records manually written observations during the various model training runs.
+
+
+### e.g. softmax-off-by-one significantly slower, potentially due to implementation inefficiencies, unsure
+### RoPE embeddings seem to be slightly slower (7200 tokens/sec | 30.8 GB/s rather than 7800 | 34 but loss appears better. Also, token routing is much more balanced and results in drastically fewer dropped tokens.

@@ -1,0 +1,44 @@
+2023-12-24 12:35:08,951 INFO    Thread-11 (_run_job):2036 [wandb_setup.py:_flush():76] Current SDK version is 0.16.1
+2023-12-24 12:35:08,952 INFO    Thread-11 (_run_job):2036 [wandb_setup.py:_flush():76] Configure stats pid to 2036
+2023-12-24 12:35:08,952 INFO    Thread-11 (_run_job):2036 [wandb_setup.py:_flush():76] Loading settings from /Users/Terru/.config/wandb/settings
+2023-12-24 12:35:08,952 INFO    Thread-11 (_run_job):2036 [wandb_setup.py:_flush():76] Loading settings from /Users/Terru/Desktop/self-learn/moe-kit/switch_transformer/wandb/settings
+2023-12-24 12:35:08,952 INFO    Thread-11 (_run_job):2036 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'project': 'switch_moe', 'entity': 'terru3', 'root_dir': '/Users/Terru/Desktop/self-learn/moe-kit/switch_transformer', 'run_id': '7y9sope9', 'sweep_param_path': '/Users/Terru/Desktop/self-learn/moe-kit/switch_transformer/wandb/sweep-iwboxmoj/config-7y9sope9.yaml', 'sweep_id': 'iwboxmoj'}
+2023-12-24 12:35:08,952 INFO    Thread-11 (_run_job):2036 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2023-12-24 12:35:08,952 INFO    Thread-11 (_run_job):2036 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2023-12-24 12:35:08,952 INFO    Thread-11 (_run_job):2036 [wandb_init.py:_log_setup():524] Logging user logs to /Users/Terru/Desktop/self-learn/moe-kit/switch_transformer/wandb/run-20231224_123508-7y9sope9/logs/debug.log
+2023-12-24 12:35:08,952 INFO    Thread-11 (_run_job):2036 [wandb_init.py:_log_setup():525] Logging internal logs to /Users/Terru/Desktop/self-learn/moe-kit/switch_transformer/wandb/run-20231224_123508-7y9sope9/logs/debug-internal.log
+2023-12-24 12:35:08,952 INFO    Thread-11 (_run_job):2036 [wandb_init.py:_jupyter_setup():470] configuring jupyter hooks <wandb.sdk.wandb_init._WandbInit object at 0x140463690>
+2023-12-24 12:35:08,954 INFO    Thread-11 (_run_job):2036 [wandb_init.py:init():564] calling init triggers
+2023-12-24 12:35:08,954 INFO    Thread-11 (_run_job):2036 [wandb_init.py:init():571] wandb.init called with sweep_config: {'LR': 0.0005, 'activation': 'SwiGLU', 'aux_loss_coef': 0.2, 'batch_size': 128, 'capacity_factor': 2, 'every_n_switch': 4, 'expert_dropout': 0.3, 'mlp_dropout': 0.1, 'n_experts': 64, 'norm_first': True, 'optimizer': 'adamw', 'switch_first': False}
+config: {}
+2023-12-24 12:35:08,954 INFO    Thread-11 (_run_job):2036 [wandb_init.py:init():614] starting backend
+2023-12-24 12:35:08,954 INFO    Thread-11 (_run_job):2036 [wandb_init.py:init():618] setting up manager
+2023-12-24 12:35:08,964 INFO    Thread-11 (_run_job):2036 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=spawn,fork,forkserver, using: spawn
+2023-12-24 12:35:08,965 INFO    Thread-11 (_run_job):2036 [wandb_init.py:init():624] backend started and connected
+2023-12-24 12:35:09,013 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_config_callback():1342] config_cb None None {'LR': 0.0005, 'activation': 'SwiGLU', 'aux_loss_coef': 0.2, 'batch_size': 128, 'capacity_factor': 2, 'every_n_switch': 4, 'expert_dropout': 0.3, 'mlp_dropout': 0.1, 'n_experts': 64, 'norm_first': True, 'optimizer': 'adamw', 'switch_first': False}
+2023-12-24 12:35:09,016 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_label_probe_notebook():1294] probe notebook
+2023-12-24 12:35:09,016 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_label_probe_notebook():1304] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2023-12-24 12:35:09,016 INFO    Thread-11 (_run_job):2036 [wandb_init.py:init():716] updated telemetry
+2023-12-24 12:35:09,037 INFO    Thread-11 (_run_job):2036 [wandb_init.py:init():749] communicating run to backend with 90.0 second timeout
+2023-12-24 12:35:09,370 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_on_init():2254] communicating current version
+2023-12-24 12:35:09,587 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_on_init():2263] got version response 
+2023-12-24 12:35:09,587 INFO    Thread-11 (_run_job):2036 [wandb_init.py:init():800] starting run threads in backend
+2023-12-24 12:35:13,138 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_console_start():2233] atexit reg
+2023-12-24 12:35:13,139 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_redirect():2088] redirect: wrap_raw
+2023-12-24 12:35:13,139 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_redirect():2153] Wrapping output streams.
+2023-12-24 12:35:13,139 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_redirect():2178] Redirects installed.
+2023-12-24 12:35:13,140 INFO    Thread-11 (_run_job):2036 [wandb_init.py:init():841] run started, returning control to user process
+2023-12-24 12:35:13,295 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_finish():1962] finishing run terru3/switch_moe/7y9sope9
+2023-12-24 12:35:13,295 INFO    Thread-11 (_run_job):2036 [jupyter.py:save_history():445] not saving jupyter history
+2023-12-24 12:35:13,295 INFO    Thread-11 (_run_job):2036 [jupyter.py:save_ipynb():373] not saving jupyter notebook
+2023-12-24 12:35:13,296 INFO    Thread-11 (_run_job):2036 [wandb_init.py:_jupyter_teardown():452] cleaning up jupyter logic
+2023-12-24 12:35:13,296 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_atexit_cleanup():2202] got exitcode: 0
+2023-12-24 12:35:13,296 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_restore():2185] restore
+2023-12-24 12:35:13,296 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_restore():2191] restore done
+2023-12-24 12:35:18,645 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_footer_history_summary_info():3837] rendering history
+2023-12-24 12:35:18,646 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_footer_history_summary_info():3869] rendering summary
+2023-12-24 12:35:18,652 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_footer_sync_info():3796] logging synced files
+2023-12-24 12:35:18,653 INFO    Thread-11 (_run_job):2036 [wandb_run.py:_finish():1962] finishing run terru3/switch_moe/7y9sope9
+2023-12-24 12:35:18,653 INFO    Thread-11 (_run_job):2036 [jupyter.py:save_history():445] not saving jupyter history
+2023-12-24 12:35:18,653 INFO    Thread-11 (_run_job):2036 [jupyter.py:save_ipynb():373] not saving jupyter notebook
+2023-12-24 12:35:18,653 INFO    Thread-11 (_run_job):2036 [wandb_init.py:_jupyter_teardown():452] cleaning up jupyter logic

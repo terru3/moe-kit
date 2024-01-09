@@ -1,6 +1,8 @@
 ### TODOs:
 # more documentation
 # More features (see below) such as (smaller) weight initialization
+## MQA/GQA
+## Rotary embeddings (RoPE) and functionality to choose embedding type
 
 ## Imports
 import copy
@@ -10,18 +12,45 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from einops import rearrange
+from torch.backends.cuda import sdp_kernel, SDPBackend
 
-## util fn
+backend_map = {
+    SDPBackend.MATH: {"enable_math": True, "enable_flash": False, "enable_mem_efficient": False},
+    SDPBackend.FLASH_ATTENTION: {"enable_math": False, "enable_flash": True, "enable_mem_efficient": False},
+    SDPBackend.EFFICIENT_ATTENTION: {"enable_math": False, "enable_flash": False, "enable_mem_efficient": True}
+}
+
+## util functions
 def softmax_off_by_one(x, dim):
     e_x = torch.exp(x - torch.amax(x, dim=dim, keepdim=True)[0])
     return e_x / (1 + e_x.sum(dim=dim, keepdim=True))
 
+class GEGLU(nn.Module):
+    """
+    https://arxiv.org/abs/2002.05202
+    """
+    def forward(self, x):
+        assert x.shape[-1] % 2 == 0
+        
+        x, gate = x.chunk(2, dim=-1)
+        return x * F.gelu(gate)
 
-## activation mappings
-act_fn_dict = {"GELU": nn.GELU()}
-## TODO: add more
+class SwiGLU(nn.Module):
+    """
+    https://arxiv.org/abs/2002.05202
+    """
+    def forward(self, x):
+        assert x.shape[-1] % 2 == 0
+        
+        x, gate = x.chunk(2, dim=-1)
+        return x * F.silu(gate)
+
+## activation mappings. defined inside to make use of model params
+act_fn_dict = {"GELU": nn.GELU(),
+               "GEGLU": GEGLU(), # halves dim to n_ff/2
+               "SwiGLU": SwiGLU()} # halves dim to n_ff/2
+# SwiGLU seems faster than GELU (tho potentially due to fewer params), and potentially better too, from preliminary testing
 
 ## Model
 class MLP(nn.Module):
@@ -29,12 +58,15 @@ class MLP(nn.Module):
         super().__init__()
 
         act_fn = act_fn_dict[activation]
+        # if GEGLU or SwiGLU, halves hidden dim after chunking
+        # note this decreases num model params
+        hidden_dim_out = n_ff if activation == "GELU" else n_ff // 2
 
         self.net = nn.Sequential(
             nn.Linear(n_embd, n_ff),
             act_fn,
             nn.Dropout(p=dropout),
-            nn.Linear(n_ff, n_embd),
+            nn.Linear(hidden_dim_out, n_embd),
         )
 
     def forward(self, x):
@@ -42,11 +74,12 @@ class MLP(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, n_embd, n_head, softmax_off_by_one, dropout=0.1):
+    def __init__(self, n_embd, n_head, device, use_rotary_embd, softmax_off_by_one, dropout=0.1):
         super().__init__()
 
         self.n_embd = n_embd
         self.n_head = n_head
+        # note no support for GQA yet
         self.head_dim = (
             n_embd // n_head
         )  # Dimension of each head's key, query, and value
@@ -57,6 +90,10 @@ class MultiHeadAttention(nn.Module):
         self.key = nn.Linear(n_embd, n_embd, bias=False)
         self.value = nn.Linear(n_embd, n_embd, bias=False)
         self.out = nn.Linear(n_embd, n_embd, bias=False)
+
+        self.device = device
+
+        self.rotary_embd = RotaryPositionalEmbedding(self.head_dim) if use_rotary_embd else None
 
     def split_heads(self, x):
         B, S, D = x.size()
@@ -69,20 +106,20 @@ class MultiHeadAttention(nn.Module):
         # output: [B, S, n_embd]
         return x.transpose(1, 2).contiguous().view(B, S, self.n_embd)
 
-    def scaled_dot_product(self, q, k, v, dropout, mask=None):
-        # q,k,v are [B, n_head, S, head_dim]
-        # wei = [B, n_head, S, S]
-        wei = q @ k.transpose(-2, -1) / np.sqrt(self.head_dim)
-        # mask is [B, 1, S, S]
-        if mask is not None:
-            wei = wei.masked_fill(mask, float("-inf"))
+    # def scaled_dot_product(self, q, k, v, dropout, mask=None):
+    #     # q,k,v are [B, n_head, S, head_dim]
+    #     # wei = [B, n_head, S, S]
+    #     wei = q @ k.transpose(-2, -1) / np.sqrt(self.head_dim)
+    #     # mask is [B, 1, S, S]
+    #     if mask is not None:
+    #         wei = wei.masked_fill(mask, float("-inf"))
 
-        if self.softmax_off_by_one:
-            wei = dropout(softmax_off_by_one(wei, dim=-1))
-        else:
-            wei = dropout(F.softmax(wei, dim=-1))
-        out = wei @ v
-        return out
+    #     if self.softmax_off_by_one:
+    #         wei = dropout(softmax_off_by_one(wei, dim=-1))
+    #     else:
+    #         wei = dropout(F.softmax(wei, dim=-1))
+    #     out = wei @ v
+    #     return out
 
     def forward(self, x, mask=None):
         # x: (B, S, n_embd)
@@ -91,12 +128,56 @@ class MultiHeadAttention(nn.Module):
         k = self.split_heads(self.key(x))
         v = self.split_heads(self.value(x))
 
+        ### TOTEST: apply rotary embd
+        if self.rotary_embd:
+            q, k = self.rotary_embd(q=q, k=k)
+
         # Step 3: Compute scaled dot-product attention with causal mask
-        attn = self.scaled_dot_product(q, k, v, self.drop, mask)
+        # with torch's flash attention, our mask is not actually used.
+        with sdp_kernel(**backend_map[SDPBackend.FLASH_ATTENTION]):
+            try:
+              attn = F.scaled_dot_product_attention(q, k, v,
+                                                    dropout_p=self.drop.p if self.device.type == "cuda" else 0,
+                                                    is_causal=True)
+            # Dec 27 2023: Both fused kernels do not support non-null attn_mask; let it generate its own
+            # Dec 27 2023: CPU: Both fused kernels do not support non-zero dropout.
+            except RuntimeError:
+                print("FlashAttention is not supported. See warnings for reasons.")
+        
+        # attn = self.scaled_dot_product(q, k, v, self.drop, mask)
 
         # Step 4 and 5: Concatenate attention scores, return projected output matrix
         out = self.out(self.combine_heads(attn))  # (B, S, n_embd)
         return out
+
+### TODO: Implement multi-query attention (MQA) and/or grouped query attention (GQA)   
+        # self.query_heads = query_heads
+        # self.kv_heads = kv_heads
+        # self.head_dim = (
+        #     n_embd // n_head
+        # )
+
+        # self.query = nn.Linear(n_embd, n_embd, bias=False)
+        # kv_embd_dim = n_embd // query_heads * kv_heads
+        # self.key = nn.Linear(n_embd, kv_embd_dim, bias=False)
+        # self.value = nn.Linear(n_embd, kv_embd_dim, bias=False)
+        # self.out = nn.Linear(kv_embd_dim, n_embd, bias=False)
+
+        # # in forward:
+        # # given (B, S, n_embd), h = num heads. not the same for all q k v I guess, careful?
+        # q = rearrange(q, "b s (h d) -> b h s d", h=self.query_heads)
+        # k = rearrange(k, "b s (h d) -> b h s d", h=self.kv_heads)
+        # v = rearrange(v, "b s (h d) -> b h s d", h=self.kv_heads)
+        # # Apply attention, then fold 'h' attention heads back into 'd'.
+        # # Step 3: Compute scaled dot-product attention with causal mask
+        # attn = self.scaled_dot_product(q, k, v, self.drop, mask) ############# TODO, modify for GQA ofc
+                ## e.g. num_head_groups = hq // hk
+                ## ## separate query into num_head_group chunks
+                ## q = rearrange(q, "b (h g) s d -> b g h s d", g=num_head_groups)
+                ## ## also, use query for scaling? scale = query.size(-1) ** 0.5
+        # attn = rearrange(attn, "b h s d -> b s (h d)")
+        # out = self.out(attn)  # (B, S, n_embd)
+        # return out
 
 
 class SwitchFeedForward(nn.Module):
@@ -217,7 +298,9 @@ class Block(nn.Module):
         n_embd,
         n_head,
         n_ff,
+        device,
         norm_first,
+        use_rotary_embd,
         use_amp,
         switch,
         capacity_factor,
@@ -231,7 +314,7 @@ class Block(nn.Module):
         expert_dropout=0.4,
     ):
         super().__init__()
-        self.sa = MultiHeadAttention(n_embd, n_head, softmax_off_by_one, mlp_dropout)
+        self.sa = MultiHeadAttention(n_embd, n_head, device, use_rotary_embd, softmax_off_by_one, mlp_dropout)
         if switch:
             self.ff = SwitchFeedForward(
                 n_embd,
@@ -310,6 +393,50 @@ class PositionalEncoding(nn.Module):
         return self.pe[: x.size(0)]
 
 
+class RotaryPositionalEmbedding(nn.Module):
+    """
+    Applies relative positional embeddings to the queries and keys prior to performing scaled dot-product attention. Embeddings
+    are calculated via process in which each position of Q and K receives a unique rotation.
+    """
+
+    def __init__(self, dim, base=10000):
+        # dim != n_embd. dim = key head_dim
+        super().__init__()
+        
+        inv_freq = 1. / (base ** (torch.arange(0, dim, 2).float() / dim)) # (dim/2)
+        self.register_buffer('inv_freq', inv_freq)
+        self.seq_len_cached = None
+        self.cos_cached = None
+        self.sin_cached = None
+
+    def forward(self, q, k):
+        # TODO: q will be diff in the case of GQA right?
+        B, S, n_head, head_dim = k.shape
+        
+        t = torch.arange(S, device=self.inv_freq.device)
+        freqs = torch.einsum('i,j->ij', t, self.inv_freq) # outer product: (seq_len, dim/2)
+        emb = torch.cat((freqs, freqs), dim=-1).to(k.device) # (seq_len, dim)
+        self.cos_cached = emb.cos()[None, :, None, :] # both (1, seq_len, 1, dim), prepare for broadcasting across q and k
+        self.sin_cached = emb.sin()[None, :, None, :] 
+
+        return apply_rotary_pos_emb(q, k, self.cos_cached, self.sin_cached)
+
+# apply rotary pos emb helpers
+def rotate_half(x):
+    """
+    Splits x in half and applies rotation (e.g. [3, 1, 2, 0] -> [-2, 0, 3, 1]).
+    """
+    x1, x2 = x[..., :x.shape[-1] // 2], x[..., x.shape[-1] // 2:]
+    return torch.cat((-x2, x1), dim=-1)
+
+@torch.jit.script
+def apply_rotary_pos_emb(q, k, cos, sin):
+    # q, k = (B, S, n_head, head_dim) = result shapes
+    return (q * cos) + (rotate_half(q) * sin), (k * cos) + (rotate_half(k) * sin)
+
+# r = Rotary(dim=512)
+# r(torch.rand(32, 32, 32))
+
 class Transformer(nn.Module):
     """
     TODO
@@ -322,8 +449,10 @@ class Transformer(nn.Module):
         -n_layer (int):
         -device:
         -norm_first (bool=True):
+        -use_rotary_embd (bool=True):
         -softmax_off_by_one (bool):
         -use_amp (bool=False):
+        -amp_dtype: 
         -switch (bool=False): Indicates whether to insert Switch MoE layers.
         -switch_first (bool): Indicates whether to use a Switch layer in the first block.
         -every_n_switch (int): Frequency to insert Switch layers.
@@ -351,8 +480,10 @@ class Transformer(nn.Module):
         n_layer,
         device,
         norm_first=True,
+        use_rotary_embd=True,
         softmax_off_by_one=False,
         use_amp=False,
+        amp_dtype=torch.bfloat16,
         switch=False,
         switch_first=None,
         every_n_switch=None,
@@ -386,8 +517,10 @@ class Transformer(nn.Module):
         ), "`mlp_dropout` and `expert_dropout` must be numeric values between 0 and 1 (inclusive)."
 
         self.token_embedding = nn.Embedding(vocab_size, n_embd)
-        self.position_embedding = PositionalEncoding(n_embd, seq_length)
 
+        #### toggle between rotary or classic sinusoidal embedding
+        self.position_embedding = PositionalEncoding(n_embd, seq_length) if not use_rotary_embd else None
+        
         ### Alternate blocks with switch = True/False
         switch_args = np.full((n_layer,), False)
         if switch:
@@ -409,7 +542,9 @@ class Transformer(nn.Module):
                     n_embd,
                     n_head,
                     n_ff,
+                    device,
                     norm_first,
+                    use_rotary_embd,
                     use_amp,
                     switch_args[i],
                     capacity_factor,
@@ -465,8 +600,11 @@ class Transformer(nn.Module):
         # mask = (B x 1 x S x S)
 
         tok_emb = self.token_embedding(x)
-        pos_emb = self.position_embedding(torch.arange(S))
-        x = self.drop(tok_emb + pos_emb)
+        if self.position_embedding:
+            pos_emb = self.position_embedding(torch.arange(S))
+            x = self.drop(tok_emb + pos_emb)
+        else:
+            x = self.drop(tok_emb)
         # (B, S, n_embd)
 
         expert_token_counts, prob_sum, n_dropped = [], [], []

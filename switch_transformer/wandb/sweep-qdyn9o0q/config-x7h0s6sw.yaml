@@ -1,0 +1,26 @@
+wandb_version: 1
+
+LR:
+  value: 0.001
+activation:
+  value: GEGLU
+aux_loss_coef:
+  value: 0.005
+batch_size:
+  value: 256
+capacity_factor:
+  value: 0.75
+every_n_switch:
+  value: 3
+expert_dropout:
+  value: 0.3
+mlp_dropout:
+  value: 0.2
+n_experts:
+  value: 64
+norm_first:
+  value: false
+optimizer:
+  value: sgd
+switch_first:
+  value: true
