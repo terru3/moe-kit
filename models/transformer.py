@@ -2,7 +2,6 @@
 # more documentation
 # More features (see below) such as (smaller) weight initialization
 ## MQA/GQA
-## Rotary embeddings (RoPE) and functionality to choose embedding type
 
 ## Imports
 import copy
@@ -94,6 +93,7 @@ class MultiHeadAttention(nn.Module):
         self.device = device
 
         self.rotary_embd = RotaryPositionalEmbedding(self.head_dim) if use_rotary_embd else None
+        # note if GQA, RoPE still uses regular head_dim
 
     def split_heads(self, x):
         B, S, D = x.size()
@@ -106,10 +106,13 @@ class MultiHeadAttention(nn.Module):
         # output: [B, S, n_embd]
         return x.transpose(1, 2).contiguous().view(B, S, self.n_embd)
 
+    ## Did not re-write scaled dot product to support GQA——GQA is directly compatible with F.scaled_dot_product_attention
+    ## (I believe? Untested so far)
+    
     # def scaled_dot_product(self, q, k, v, dropout, mask=None):
     #     # q,k,v are [B, n_head, S, head_dim]
     #     # wei = [B, n_head, S, S]
-    #     wei = q @ k.transpose(-2, -1) / np.sqrt(self.head_dim)
+    #     wei = q @ k.transpose(-2, -1) / np.sqrt(self.head_dim) # use regular head_dim for scaling
     #     # mask is [B, 1, S, S]
     #     if mask is not None:
     #         wei = wei.masked_fill(mask, float("-inf"))
@@ -128,7 +131,6 @@ class MultiHeadAttention(nn.Module):
         k = self.split_heads(self.key(x))
         v = self.split_heads(self.value(x))
 
-        ### TOTEST: apply rotary embd
         if self.rotary_embd:
             q, k = self.rotary_embd(q=q, k=k)
 
@@ -139,8 +141,8 @@ class MultiHeadAttention(nn.Module):
               attn = F.scaled_dot_product_attention(q, k, v,
                                                     dropout_p=self.drop.p if self.device.type == "cuda" else 0,
                                                     is_causal=True)
-            # Dec 27 2023: Both fused kernels do not support non-null attn_mask; let it generate its own
-            # Dec 27 2023: CPU: Both fused kernels do not support non-zero dropout.
+            # Both fused kernels do not support non-null attn_mask; let it generate its own (Dec 2023)
+            # CPU: Both fused kernels do not support non-zero dropout. (Dec 2023)
             except RuntimeError:
                 print("FlashAttention is not supported. See warnings for reasons.")
         
@@ -150,35 +152,24 @@ class MultiHeadAttention(nn.Module):
         out = self.out(self.combine_heads(attn))  # (B, S, n_embd)
         return out
 
-### TODO: Implement multi-query attention (MQA) and/or grouped query attention (GQA)   
-        # self.query_heads = query_heads
-        # self.kv_heads = kv_heads
-        # self.head_dim = (
-        #     n_embd // n_head
-        # )
+### TODO: Implement grouped query attention (GQA)   
 
-        # self.query = nn.Linear(n_embd, n_embd, bias=False)
-        # kv_embd_dim = n_embd // query_heads * kv_heads
-        # self.key = nn.Linear(n_embd, kv_embd_dim, bias=False)
-        # self.value = nn.Linear(n_embd, kv_embd_dim, bias=False)
-        # self.out = nn.Linear(kv_embd_dim, n_embd, bias=False)
+        # self.n_kv_head = n_kv_head
+        # self.n_repeat = self.n_head // self.n_kv_head
 
-        # # in forward:
-        # # given (B, S, n_embd), h = num heads. not the same for all q k v I guess, careful?
-        # q = rearrange(q, "b s (h d) -> b h s d", h=self.query_heads)
-        # k = rearrange(k, "b s (h d) -> b h s d", h=self.kv_heads)
-        # v = rearrange(v, "b s (h d) -> b h s d", h=self.kv_heads)
-        # # Apply attention, then fold 'h' attention heads back into 'd'.
-        # # Step 3: Compute scaled dot-product attention with causal mask
-        # attn = self.scaled_dot_product(q, k, v, self.drop, mask) ############# TODO, modify for GQA ofc
-                ## e.g. num_head_groups = hq // hk
-                ## ## separate query into num_head_group chunks
-                ## q = rearrange(q, "b (h g) s d -> b g h s d", g=num_head_groups)
-                ## ## also, use query for scaling? scale = query.size(-1) ** 0.5
-        # attn = rearrange(attn, "b h s d -> b s (h d)")
-        # out = self.out(attn)  # (B, S, n_embd)
-        # return out
+        # self.key = nn.Linear(n_embd, n_kv_head * head_dim, bias=False)
+        # self.value = nn.Linear(n_embd, n_kv_head * head_dim, bias=False)
 
+        ## then in forward, after applying rotary embeddings to q and k
+        # k, v = repeat_kv(k, v, self.n_repeat)
+        # print('kv shape', k.shape, v.shape) # todo: assert that now they are [B, n_head, S, head_dim] rather than n_kv_head
+        # # then do scaled dot product, etc. as usual
+
+# def repeat_kv(k, v, n_repeat):
+#     k = torch.repeat_interleave(k, repeats=n_repeat, dim=1)
+#     v = torch.repeat_interleave(v, repeats=n_repeat, dim=1)
+#     return k, v
+    
 
 class SwitchFeedForward(nn.Module):
     """
@@ -410,14 +401,13 @@ class RotaryPositionalEmbedding(nn.Module):
         self.sin_cached = None
 
     def forward(self, q, k):
-        # TODO: q will be diff in the case of GQA right?
-        B, S, n_head, head_dim = k.shape
+        B, n_head, S, head_dim = k.shape
         
         t = torch.arange(S, device=self.inv_freq.device)
         freqs = torch.einsum('i,j->ij', t, self.inv_freq) # outer product: (seq_len, dim/2)
         emb = torch.cat((freqs, freqs), dim=-1).to(k.device) # (seq_len, dim)
-        self.cos_cached = emb.cos()[None, :, None, :] # both (1, seq_len, 1, dim), prepare for broadcasting across q and k
-        self.sin_cached = emb.sin()[None, :, None, :] 
+        self.cos_cached = emb.cos()[None, None, :, :] # both (1, 1, seq_len, dim), prepare for broadcasting across q and k
+        self.sin_cached = emb.sin()[None, None, :, :] 
 
         return apply_rotary_pos_emb(q, k, self.cos_cached, self.sin_cached)
 
@@ -431,11 +421,9 @@ def rotate_half(x):
 
 @torch.jit.script
 def apply_rotary_pos_emb(q, k, cos, sin):
-    # q, k = (B, S, n_head, head_dim) = result shapes
+    # q, k = (B, n_head, S, head_dim) = result shapes
     return (q * cos) + (rotate_half(q) * sin), (k * cos) + (rotate_half(k) * sin)
-
-# r = Rotary(dim=512)
-# r(torch.rand(32, 32, 32))
+    
 
 class Transformer(nn.Module):
     """
