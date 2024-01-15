@@ -1,7 +1,6 @@
 ### TODOs:
 # more documentation
 # More features (see below) such as (smaller) weight initialization
-## MQA/GQA
 
 ## Imports
 import copy
@@ -73,42 +72,43 @@ class MLP(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, n_embd, n_head, device, use_rotary_embd, softmax_off_by_one, dropout=0.1):
+    def __init__(self, n_embd, n_head, n_kv_head, device, use_rotary_embd, softmax_off_by_one, dropout=0.1):
         super().__init__()
 
         self.n_embd = n_embd
         self.n_head = n_head
-        # note no support for GQA yet
         self.head_dim = (
             n_embd // n_head
-        )  # Dimension of each head's key, query, and value
+        )
         self.softmax_off_by_one = softmax_off_by_one
         self.drop = nn.Dropout(p=dropout)
+        
+        self.n_kv_head = n_kv_head
+        self.n_repeat = self.n_head // self.n_kv_head
 
         self.query = nn.Linear(n_embd, n_embd, bias=False)
-        self.key = nn.Linear(n_embd, n_embd, bias=False)
-        self.value = nn.Linear(n_embd, n_embd, bias=False)
+        self.key = nn.Linear(n_embd, n_kv_head * self.head_dim, bias=False)
+        self.value = nn.Linear(n_embd, n_kv_head * self.head_dim, bias=False)
         self.out = nn.Linear(n_embd, n_embd, bias=False)
 
         self.device = device
 
         self.rotary_embd = RotaryPositionalEmbedding(self.head_dim) if use_rotary_embd else None
-        # note if GQA, RoPE still uses regular head_dim
+        # note in GQA, RoPE still uses regular head_dim
 
-    def split_heads(self, x):
+    def split_heads(self, x, n_head):
+        # note n_head may differ in the case of GQA (q = n_head, k/v = n_kv_head)
         B, S, D = x.size()
         # split dimension into n_head * head_dim, then transpose the sequence length w/ n_head
         # output: [B, n_head, S, head_dim]
-        return x.view(B, S, self.n_head, self.head_dim).transpose(1, 2)
+        return x.view(B, S, n_head, self.head_dim).transpose(1, 2)
 
     def combine_heads(self, x):
         B, _, S, head_dim = x.size()  # _ is n_head which we will merge
         # output: [B, S, n_embd]
         return x.transpose(1, 2).contiguous().view(B, S, self.n_embd)
 
-    ## Did not re-write scaled dot product to support GQA——GQA is directly compatible with F.scaled_dot_product_attention
-    ## (I believe? Untested so far)
-    
+    ## Note: Did not re-write scaled dot product to support GQA——GQA is directly compatible with F.scaled_dot_product_attention
     # def scaled_dot_product(self, q, k, v, dropout, mask=None):
     #     # q,k,v are [B, n_head, S, head_dim]
     #     # wei = [B, n_head, S, S]
@@ -126,16 +126,21 @@ class MultiHeadAttention(nn.Module):
 
     def forward(self, x, mask=None):
         # x: (B, S, n_embd)
-        # Step 1 and 2: Project full query, key, value, then split via reshaping
-        q = self.split_heads(self.query(x))
-        k = self.split_heads(self.key(x))
-        v = self.split_heads(self.value(x))
-
+        # Step 1 and 2: Project query, key, value, then split via reshaping
+        q = self.split_heads(self.query(x), self.n_head)
+        k = self.split_heads(self.key(x), self.n_kv_head)
+        v = self.split_heads(self.value(x), self.n_kv_head)
+        
         if self.rotary_embd:
             q, k = self.rotary_embd(q=q, k=k)
 
+        ## GQA
+        k, v = repeat_kv(k, v, self.n_repeat)
+        assert k.shape[1] == self.n_head and v.shape[1] == self.n_head, "key and value n_head do not match query n_head"
+        # now q, k, v are [B, n_head, S, head_dim)
+        
         # Step 3: Compute scaled dot-product attention with causal mask
-        # with torch's flash attention, our mask is not actually used.
+        # with torch's flash attention, our mask argument is not actually used
         with sdp_kernel(**backend_map[SDPBackend.FLASH_ATTENTION]):
             try:
               attn = F.scaled_dot_product_attention(q, k, v,
@@ -152,24 +157,11 @@ class MultiHeadAttention(nn.Module):
         out = self.out(self.combine_heads(attn))  # (B, S, n_embd)
         return out
 
-### TODO: Implement grouped query attention (GQA)   
-
-        # self.n_kv_head = n_kv_head
-        # self.n_repeat = self.n_head // self.n_kv_head
-
-        # self.key = nn.Linear(n_embd, n_kv_head * head_dim, bias=False)
-        # self.value = nn.Linear(n_embd, n_kv_head * head_dim, bias=False)
-
-        ## then in forward, after applying rotary embeddings to q and k
-        # k, v = repeat_kv(k, v, self.n_repeat)
-        # print('kv shape', k.shape, v.shape) # todo: assert that now they are [B, n_head, S, head_dim] rather than n_kv_head
-        # # then do scaled dot product, etc. as usual
-
-# def repeat_kv(k, v, n_repeat):
-#     k = torch.repeat_interleave(k, repeats=n_repeat, dim=1)
-#     v = torch.repeat_interleave(v, repeats=n_repeat, dim=1)
-#     return k, v
-    
+# helper function for GQA
+def repeat_kv(k, v, n_repeat):
+    k = torch.repeat_interleave(k, repeats=n_repeat, dim=1)
+    v = torch.repeat_interleave(v, repeats=n_repeat, dim=1)
+    return k, v
 
 class SwitchFeedForward(nn.Module):
     """
@@ -288,6 +280,7 @@ class Block(nn.Module):
         self,
         n_embd,
         n_head,
+        n_kv_head,
         n_ff,
         device,
         norm_first,
@@ -305,7 +298,7 @@ class Block(nn.Module):
         expert_dropout=0.4,
     ):
         super().__init__()
-        self.sa = MultiHeadAttention(n_embd, n_head, device, use_rotary_embd, softmax_off_by_one, mlp_dropout)
+        self.sa = MultiHeadAttention(n_embd, n_head, n_kv_head, device, use_rotary_embd, softmax_off_by_one, mlp_dropout)
         if switch:
             self.ff = SwitchFeedForward(
                 n_embd,
@@ -433,9 +426,10 @@ class Transformer(nn.Module):
         -seq_length (int)
         -n_embd (int)
         -n_head (int):
-        -n_ff:
+        -n_ff (int):
         -n_layer (int):
         -device:
+        -n_kv_head (int):
         -norm_first (bool=True):
         -use_rotary_embd (bool=True):
         -softmax_off_by_one (bool):
@@ -467,6 +461,7 @@ class Transformer(nn.Module):
         n_ff,
         n_layer,
         device,
+        n_kv_head=None,
         norm_first=True,
         use_rotary_embd=True,
         softmax_off_by_one=False,
@@ -504,6 +499,23 @@ class Transformer(nn.Module):
             and 0 <= expert_dropout <= 1
         ), "`mlp_dropout` and `expert_dropout` must be numeric values between 0 and 1 (inclusive)."
 
+        if not n_kv_head:
+            n_kv_head = n_head
+        assert (n_head % n_kv_head == 0), "n_kv_head must be divisible by, and at most equal to n_head"
+
+        assert (
+            isinstance(n_embd, int)
+            and isinstance(n_head, int)
+            and isinstance(n_ff, int)
+            and isinstance(n_layer, int)
+            and isinstance(n_kv_head, int)
+            and n_embd > 0
+            and n_head > 0
+            and n_ff > 0
+            and n_layer > 0
+            and n_kv_head > 0
+        ), "n_embd/n_head/n_ff/n_layer/n_kv_head must be positive integers."
+
         self.token_embedding = nn.Embedding(vocab_size, n_embd)
 
         #### toggle between rotary or classic sinusoidal embedding
@@ -529,6 +541,7 @@ class Transformer(nn.Module):
                 Block(
                     n_embd,
                     n_head,
+                    n_kv_head, 
                     n_ff,
                     device,
                     norm_first,
@@ -555,6 +568,12 @@ class Transformer(nn.Module):
         self.seq_length = seq_length
         self.device = device
         self.use_amp = use_amp
+
+        # for printing
+        self.n_head = n_head
+        self.n_kv_head = n_kv_head
+        self.is_gqa = (n_kv_head != n_head)
+        
         self.init_params()
 
     # weight initialization (Xavier uniform)
