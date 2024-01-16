@@ -2,7 +2,7 @@
 
 This roadmap documents action items such as features or bugs to be developed/fixed.
 
-_Updated: 15 Jan 2024, 00:39 GMT_
+_Updated: 16 Jan 2024, 18:53 GMT_
 
 ## MoE Toolkit
 
@@ -16,7 +16,7 @@ _Updated: 15 Jan 2024, 00:39 GMT_
 |   ✔    | Implement functionality for pre vs. post layer norm                                                                                                     |
 |   ✔    | Implement switch_first=True whether to begin with a Switch layer                                                                                        |
 |   ✔    | Implement every_n_switch=2 for Switch layer frequency                                                                                                   |
-|   ✔    | Implement rotary embeddings (RoPE)                                                                                                                      |
+|   ✔    | Implement rotary embeddings (RoPE) (+ scaling trick to extend context length)                                                                           |
 |   ✔    | Implement multi-query attention (MQA) / grouped query attention (GQA)                                                                                   |
 |   ❌   | Implement smaller Switch weight initialization                                                                                                          |
 |   ❌   | Implement activation function customizability                                                                                                           |

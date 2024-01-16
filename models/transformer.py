@@ -14,9 +14,21 @@ from einops import rearrange
 from torch.backends.cuda import sdp_kernel, SDPBackend
 
 backend_map = {
-    SDPBackend.MATH: {"enable_math": True, "enable_flash": False, "enable_mem_efficient": False},
-    SDPBackend.FLASH_ATTENTION: {"enable_math": False, "enable_flash": True, "enable_mem_efficient": False},
-    SDPBackend.EFFICIENT_ATTENTION: {"enable_math": False, "enable_flash": False, "enable_mem_efficient": True}
+    SDPBackend.MATH: {
+        "enable_math": True,
+        "enable_flash": False,
+        "enable_mem_efficient": False,
+    },
+    SDPBackend.FLASH_ATTENTION: {
+        "enable_math": False,
+        "enable_flash": True,
+        "enable_mem_efficient": False,
+    },
+    SDPBackend.EFFICIENT_ATTENTION: {
+        "enable_math": False,
+        "enable_flash": False,
+        "enable_mem_efficient": True,
+    },
 }
 
 ## util functions
@@ -24,30 +36,37 @@ def softmax_off_by_one(x, dim):
     e_x = torch.exp(x - torch.amax(x, dim=dim, keepdim=True)[0])
     return e_x / (1 + e_x.sum(dim=dim, keepdim=True))
 
+
 class GEGLU(nn.Module):
     """
     https://arxiv.org/abs/2002.05202
     """
+
     def forward(self, x):
         assert x.shape[-1] % 2 == 0
-        
+
         x, gate = x.chunk(2, dim=-1)
         return x * F.gelu(gate)
+
 
 class SwiGLU(nn.Module):
     """
     https://arxiv.org/abs/2002.05202
     """
+
     def forward(self, x):
         assert x.shape[-1] % 2 == 0
-        
+
         x, gate = x.chunk(2, dim=-1)
         return x * F.silu(gate)
 
+
 ## activation mappings. defined inside to make use of model params
-act_fn_dict = {"GELU": nn.GELU(),
-               "GEGLU": GEGLU(), # halves dim to n_ff/2
-               "SwiGLU": SwiGLU()} # halves dim to n_ff/2
+act_fn_dict = {
+    "GELU": nn.GELU(),
+    "GEGLU": GEGLU(),  # halves dim to n_ff/2
+    "SwiGLU": SwiGLU(),
+}  # halves dim to n_ff/2
 # SwiGLU seems faster than GELU (tho potentially due to fewer params), and potentially better too, from preliminary testing
 
 ## Model
@@ -72,17 +91,25 @@ class MLP(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, n_embd, n_head, n_kv_head, device, use_rotary_embd, softmax_off_by_one, dropout=0.1):
+    def __init__(
+        self,
+        n_embd,
+        n_head,
+        n_kv_head,
+        device,
+        use_rotary_embd,
+        scale,
+        softmax_off_by_one,
+        dropout=0.1,
+    ):
         super().__init__()
 
         self.n_embd = n_embd
         self.n_head = n_head
-        self.head_dim = (
-            n_embd // n_head
-        )
+        self.head_dim = n_embd // n_head
         self.softmax_off_by_one = softmax_off_by_one
         self.drop = nn.Dropout(p=dropout)
-        
+
         self.n_kv_head = n_kv_head
         self.n_repeat = self.n_head // self.n_kv_head
 
@@ -93,7 +120,11 @@ class MultiHeadAttention(nn.Module):
 
         self.device = device
 
-        self.rotary_embd = RotaryPositionalEmbedding(self.head_dim) if use_rotary_embd else None
+        self.rotary_embd = (
+            RotaryPositionalEmbedding(self.head_dim, scale=scale)
+            if use_rotary_embd
+            else None
+        )
         # note in GQA, RoPE still uses regular head_dim
 
     def split_heads(self, x, n_head):
@@ -130,38 +161,46 @@ class MultiHeadAttention(nn.Module):
         q = self.split_heads(self.query(x), self.n_head)
         k = self.split_heads(self.key(x), self.n_kv_head)
         v = self.split_heads(self.value(x), self.n_kv_head)
-        
+
         if self.rotary_embd:
             q, k = self.rotary_embd(q=q, k=k)
 
         ## GQA
         k, v = repeat_kv(k, v, self.n_repeat)
-        assert k.shape[1] == self.n_head and v.shape[1] == self.n_head, "key and value n_head do not match query n_head"
+        assert (
+            k.shape[1] == self.n_head and v.shape[1] == self.n_head
+        ), "key and value n_head do not match query n_head"
         # now q, k, v are [B, n_head, S, head_dim)
-        
+
         # Step 3: Compute scaled dot-product attention with causal mask
         # with torch's flash attention, our mask argument is not actually used
         with sdp_kernel(**backend_map[SDPBackend.FLASH_ATTENTION]):
             try:
-              attn = F.scaled_dot_product_attention(q, k, v,
-                                                    dropout_p=self.drop.p if self.device.type == "cuda" else 0,
-                                                    is_causal=True)
+                attn = F.scaled_dot_product_attention(
+                    q,
+                    k,
+                    v,
+                    dropout_p=self.drop.p if self.device.type == "cuda" else 0,
+                    is_causal=True,
+                )
             # Both fused kernels do not support non-null attn_mask; let it generate its own (Dec 2023)
             # CPU: Both fused kernels do not support non-zero dropout. (Dec 2023)
             except RuntimeError:
                 print("FlashAttention is not supported. See warnings for reasons.")
-        
+
         # attn = self.scaled_dot_product(q, k, v, self.drop, mask)
 
         # Step 4 and 5: Concatenate attention scores, return projected output matrix
         out = self.out(self.combine_heads(attn))  # (B, S, n_embd)
         return out
 
+
 # helper function for GQA
 def repeat_kv(k, v, n_repeat):
     k = torch.repeat_interleave(k, repeats=n_repeat, dim=1)
     v = torch.repeat_interleave(v, repeats=n_repeat, dim=1)
     return k, v
+
 
 class SwitchFeedForward(nn.Module):
     """
@@ -293,12 +332,22 @@ class Block(nn.Module):
         expert,
         softmax_off_by_one,
         activation,
-        noise=0.1,
-        mlp_dropout=0.1,
-        expert_dropout=0.4,
+        noise,
+        mlp_dropout,
+        expert_dropout,
+        scale,
     ):
         super().__init__()
-        self.sa = MultiHeadAttention(n_embd, n_head, n_kv_head, device, use_rotary_embd, softmax_off_by_one, mlp_dropout)
+        self.sa = MultiHeadAttention(
+            n_embd,
+            n_head,
+            n_kv_head,
+            device,
+            use_rotary_embd,
+            scale,
+            softmax_off_by_one,
+            mlp_dropout,
+        )
         if switch:
             self.ff = SwitchFeedForward(
                 n_embd,
@@ -381,42 +430,52 @@ class RotaryPositionalEmbedding(nn.Module):
     """
     Applies relative positional embeddings to the queries and keys prior to performing scaled dot-product attention. Embeddings
     are calculated via process in which each position of Q and K receives a unique rotation.
+
+    scale (float): Scales frequency of RoPE. Trick to interpolate embeddings to extend context length
     """
 
-    def __init__(self, dim, base=10000):
+    def __init__(self, dim, base=10000, scale=1):
         # dim != n_embd. dim = key head_dim
         super().__init__()
-        
-        inv_freq = 1. / (base ** (torch.arange(0, dim, 2).float() / dim)) # (dim/2)
-        self.register_buffer('inv_freq', inv_freq)
+
+        inv_freq = 1.0 / (base ** (torch.arange(0, dim, 2).float() / dim))  # (dim/2)
+        self.register_buffer("inv_freq", inv_freq)
+        self.scale = scale
         self.seq_len_cached = None
         self.cos_cached = None
         self.sin_cached = None
 
     def forward(self, q, k):
         B, n_head, S, head_dim = k.shape
-        
-        t = torch.arange(S, device=self.inv_freq.device)
-        freqs = torch.einsum('i,j->ij', t, self.inv_freq) # outer product: (seq_len, dim/2)
-        emb = torch.cat((freqs, freqs), dim=-1).to(k.device) # (seq_len, dim)
-        self.cos_cached = emb.cos()[None, None, :, :] # both (1, 1, seq_len, dim), prepare for broadcasting across q and k
-        self.sin_cached = emb.sin()[None, None, :, :] 
+
+        t = torch.arange(S, device=self.inv_freq.device, dtype=self.inv_freq.dtype)
+        t *= self.scale
+        freqs = torch.einsum(
+            "i,j->ij", t, self.inv_freq
+        )  # outer product: (seq_len, dim/2)
+        emb = torch.cat((freqs, freqs), dim=-1).to(k.device)  # (seq_len, dim)
+        self.cos_cached = emb.cos()[
+            None, None, :, :
+        ]  # both (1, 1, seq_len, dim), prepare for broadcasting across q and k
+        self.sin_cached = emb.sin()[None, None, :, :]
 
         return apply_rotary_pos_emb(q, k, self.cos_cached, self.sin_cached)
+
 
 # apply rotary pos emb helpers
 def rotate_half(x):
     """
     Splits x in half and applies rotation (e.g. [3, 1, 2, 0] -> [-2, 0, 3, 1]).
     """
-    x1, x2 = x[..., :x.shape[-1] // 2], x[..., x.shape[-1] // 2:]
+    x1, x2 = x[..., : x.shape[-1] // 2], x[..., x.shape[-1] // 2 :]
     return torch.cat((-x2, x1), dim=-1)
+
 
 @torch.jit.script
 def apply_rotary_pos_emb(q, k, cos, sin):
     # q, k = (B, n_head, S, head_dim) = result shapes
     return (q * cos) + (rotate_half(q) * sin), (k * cos) + (rotate_half(k) * sin)
-    
+
 
 class Transformer(nn.Module):
     """
@@ -434,7 +493,7 @@ class Transformer(nn.Module):
         -use_rotary_embd (bool=True):
         -softmax_off_by_one (bool):
         -use_amp (bool=False):
-        -amp_dtype: 
+        -amp_dtype:
         -switch (bool=False): Indicates whether to insert Switch MoE layers.
         -switch_first (bool): Indicates whether to use a Switch layer in the first block.
         -every_n_switch (int): Frequency to insert Switch layers.
@@ -478,6 +537,7 @@ class Transformer(nn.Module):
         noise=0.1,
         mlp_dropout=0.1,
         expert_dropout=0.4,
+        scale=1,
     ):
         super().__init__()
 
@@ -501,7 +561,9 @@ class Transformer(nn.Module):
 
         if not n_kv_head:
             n_kv_head = n_head
-        assert (n_head % n_kv_head == 0), "n_kv_head must be divisible by, and at most equal to n_head"
+        assert (
+            n_head % n_kv_head == 0
+        ), "n_kv_head must be divisible by, and at most equal to n_head"
 
         assert (
             isinstance(n_embd, int)
@@ -519,8 +581,15 @@ class Transformer(nn.Module):
         self.token_embedding = nn.Embedding(vocab_size, n_embd)
 
         #### toggle between rotary or classic sinusoidal embedding
-        self.position_embedding = PositionalEncoding(n_embd, seq_length) if not use_rotary_embd else None
-        
+        self.position_embedding = (
+            PositionalEncoding(n_embd, seq_length) if not use_rotary_embd else None
+        )
+        if scale != 1 and not use_rotary_embd:
+            warnings.warn(
+                "`scale` provided, but `use_rotary_embd=False`. `scale` will have no effect.",
+                stacklevel=2,
+            )
+
         ### Alternate blocks with switch = True/False
         switch_args = np.full((n_layer,), False)
         if switch:
@@ -541,7 +610,7 @@ class Transformer(nn.Module):
                 Block(
                     n_embd,
                     n_head,
-                    n_kv_head, 
+                    n_kv_head,
                     n_ff,
                     device,
                     norm_first,
@@ -557,6 +626,7 @@ class Transformer(nn.Module):
                     noise,
                     mlp_dropout,
                     expert_dropout,
+                    scale,
                 )
                 for i in range(n_layer)
             ]
@@ -572,8 +642,8 @@ class Transformer(nn.Module):
         # for printing
         self.n_head = n_head
         self.n_kv_head = n_kv_head
-        self.is_gqa = (n_kv_head != n_head)
-        
+        self.is_gqa = n_kv_head != n_head
+
         self.init_params()
 
     # weight initialization (Xavier uniform)
