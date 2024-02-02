@@ -1,0 +1,44 @@
+{
+    "os": "macOS-10.16-x86_64-i386-64bit",
+    "python": "3.11.5",
+    "heartbeatAt": "2024-01-17T06:59:32.230237",
+    "startedAt": "2024-01-17T06:59:31.736692",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "switch_transformer/switch_wandb_temp.ipynb",
+    "codePathLocal": null,
+    "root": "/Users/Terru/Desktop/self-learn/moe-kit",
+    "git": {
+        "remote": "https://github.com/terru3/moe-kit",
+        "commit": "866fb73647c003f7cc9d037542fd1cf591f8df9c"
+    },
+    "email": "terru3@hotmail.com",
+    "host": "Macintosh-5.local",
+    "username": "Terru",
+    "executable": "/Users/Terru/opt/miniconda3/envs/moe-kit/bin/python",
+    "cpu_count": 4,
+    "cpu_count_logical": 8,
+    "cpu_freq": {
+        "current": 2000,
+        "min": 2000,
+        "max": 2000
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2000,
+            "min": 2000,
+            "max": 2000
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 406.0575942993164,
+            "used": 21.315887451171875
+        }
+    },
+    "memory": {
+        "total": 16.0
+    }
+}

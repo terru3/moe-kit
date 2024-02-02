@@ -1,0 +1,13 @@
+
+Run ID: k6gurmob, Name: comic-sweep-1
+Step 1/1562 | Running Avg Train Loss: 7.523 | Grad Norm: 9.54 | Running Avg Tokens/Sec: 8786.46 | Bandwidth: 72.54 GB/s
+Step 2/1562 | Running Avg Train Loss: 7.392 | Grad Norm: 8.81 | Running Avg Tokens/Sec: 9139.31 | Bandwidth: 75.45 GB/s
+Step 3/1562 | Running Avg Train Loss: 7.259 | Grad Norm: 8.14 | Running Avg Tokens/Sec: 9135.50 | Bandwidth: 75.42 GB/s
+Step 4/1562 | Running Avg Train Loss: 7.144 | Grad Norm: 7.46 | Running Avg Tokens/Sec: 9250.87 | Bandwidth: 76.38 GB/s
+Step 5/1562 | Running Avg Train Loss: 7.043 | Grad Norm: 6.69 | Running Avg Tokens/Sec: 9231.24 | Bandwidth: 76.21 GB/s
+Step 6/1562 | Running Avg Train Loss: 6.957 | Grad Norm: 6.05 | Running Avg Tokens/Sec: 9062.76 | Bandwidth: 74.82 GB/s
+Step 7/1562 | Running Avg Train Loss: 6.878 | Grad Norm: 5.46 | Running Avg Tokens/Sec: 9013.98 | Bandwidth: 74.42 GB/s
+Step 8/1562 | Running Avg Train Loss: 6.804 | Grad Norm: 4.81 | Running Avg Tokens/Sec: 8934.00 | Bandwidth: 73.76 GB/s
+Step 9/1562 | Running Avg Train Loss: 6.743 | Grad Norm: 4.60 | Running Avg Tokens/Sec: 8937.73 | Bandwidth: 73.79 GB/s
+Step 10/1562 | Running Avg Train Loss: 6.685 | Grad Norm: 4.20 | Running Avg Tokens/Sec: 8959.95 | Bandwidth: 73.97 GB/s
+[34m[1mwandb[39m[22m: Ctrl + C detected. Stopping sweep.

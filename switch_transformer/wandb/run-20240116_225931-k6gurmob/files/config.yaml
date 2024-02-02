@@ -1,0 +1,67 @@
+wandb_version: 1
+
+LR:
+  desc: null
+  value: 0.003
+activation:
+  desc: null
+  value: GEGLU
+aux_loss_coef:
+  desc: null
+  value: 0.15
+batch_size:
+  desc: null
+  value: 512
+capacity_factor:
+  desc: null
+  value: 0.75
+every_n_switch:
+  desc: null
+  value: 2
+expert_dropout:
+  desc: null
+  value: 0.2
+mlp_dropout:
+  desc: null
+  value: 0.2
+n_experts:
+  desc: null
+  value: 8
+norm_first:
+  desc: null
+  value: true
+optimizer:
+  desc: null
+  value: sgd
+rope_scale:
+  desc: null
+  value: 0.25
+switch_first:
+  desc: null
+  value: false
+_wandb:
+  desc: null
+  value:
+    python_version: 3.11.5
+    cli_version: 0.16.1
+    framework: torch
+    is_jupyter_run: true
+    is_kaggle_kernel: false
+    start_time: 1705474771.761523
+    t:
+      1:
+      - 1
+      - 55
+      2:
+      - 1
+      - 55
+      3:
+      - 2
+      - 23
+      - 37
+      4: 3.11.5
+      5: 0.16.1
+      8:
+      - 1
+      - 5
+      13: darwin-x86_64
