@@ -421,7 +421,6 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x):
         # x = torch.arange(seq_length) has shape [seq_length], so x.size(0) extracts it, then we index self.pe for the first seq_length mappings
-        # note we do not add the positional embeddings to x itself yet, we simply return them
         # output = (seq_length, d_model=n_embd)
         return self.pe[: x.size(0)]
 
@@ -543,18 +542,17 @@ class Transformer(nn.Module):
 
         if switch:
             assert (
-                isinstance(switch_first, bool)
-                and isinstance(every_n_switch, int)
-                and isinstance(capacity_factor, (int, float))
-                and isinstance(drop_tokens, bool)
-                and isinstance(n_experts, int)
+                isinstance(switch_first, (bool, np.bool_))
+                and isinstance(every_n_switch, (int, np.integer))
+                and isinstance(capacity_factor, (int, np.integer, float))
+                and isinstance(drop_tokens, (bool, np.bool_))
+                and isinstance(n_experts, (int, np.integer))
                 and expert is not None
-            ), "For a switch transformer, you must provide a boolean `switch_first`, integer `every_n_switch`, numeric `capacity_factor`, boolean `drop_tokens`, \
-                    integer `n_experts` and a MLP class `expert` to serve as the experts."
+            ), "For a switch transformer, you must provide a boolean `switch_first`, integer `every_n_switch`, numeric `capacity_factor`, boolean `drop_tokens`, integer `n_experts` and a MLP class `expert` to serve as the experts."
 
         assert (
-            isinstance(mlp_dropout, (int, float))
-            and isinstance(expert_dropout, (int, float))
+            isinstance(mlp_dropout, (int, np.integer, float))
+            and isinstance(expert_dropout, (int, np.integer, float))
             and 0 <= mlp_dropout <= 1
             and 0 <= expert_dropout <= 1
         ), "`mlp_dropout` and `expert_dropout` must be numeric values between 0 and 1 (inclusive)."
@@ -566,11 +564,11 @@ class Transformer(nn.Module):
         ), "n_kv_head must be divisible by, and at most equal to n_head"
 
         assert (
-            isinstance(n_embd, int)
-            and isinstance(n_head, int)
-            and isinstance(n_ff, int)
-            and isinstance(n_layer, int)
-            and isinstance(n_kv_head, int)
+            isinstance(n_embd, (int, np.integer))
+            and isinstance(n_head, (int, np.integer))
+            and isinstance(n_ff, (int, np.integer))
+            and isinstance(n_layer, (int, np.integer))
+            and isinstance(n_kv_head, (int, np.integer))
             and n_embd > 0
             and n_head > 0
             and n_ff > 0
@@ -589,6 +587,8 @@ class Transformer(nn.Module):
                 "`scale` provided, but `use_rotary_embd=False`. `scale` will have no effect.",
                 stacklevel=2,
             )
+
+        # todo: warn if switch_first=True but switch=False
 
         ### Alternate blocks with switch = True/False
         switch_args = np.full((n_layer,), False)
@@ -642,6 +642,7 @@ class Transformer(nn.Module):
         # for printing
         self.n_head = n_head
         self.n_kv_head = n_kv_head
+        self.n_experts = n_experts
         self.is_gqa = n_kv_head != n_head
 
         self.init_params()
@@ -714,6 +715,7 @@ class Transformer(nn.Module):
         num_beams=None,
         p_nucleus=None,
         k=None,
+        uncond=False,
     ):
 
         # input_ids begins as (B, S)
@@ -787,4 +789,6 @@ class Transformer(nn.Module):
 
                 # now input_text = (B, S + 1)
 
+        if uncond:  # ignore first empty token
+            input_ids = input_ids[:, 1:]
         return input_ids

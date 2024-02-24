@@ -1,0 +1,7 @@
+,Train Loss,Train Tokens/s,Bandwidth (GB/s),Train Memory,Inference Tokens/s,Inference Memory,num_params,num_active_params,seq_len,n_embd,n_ff_ratio,n_head,n_kv_head,n_layer,norm_first,switch_first,use_rotary_embd,softmax_off_by_one,switch,every_n_switch,capacity_factor,drop_tokens,n_experts,activation,mlp_dropout,expert_dropout,scale,gqa,generated_text
+0,7.455641403198242,6196.75930723172,125.87306150222913,"{'reserved_memory': 0, 'allocated_memory': 0}",126.40478669803532,"{'reserved_memory': 0, 'allocated_memory': 0}",5078085,3894593,128.0,384.0,2.0,8.0,2.0,4.0,True,True,True,True,True,2.0,1.0,True,2.0,GELU,0.1,0.4,0.5,True,"Rt'IcEShOII spt, bemehithethesthy bCI thy mes melur I I the?
+A s se?
+Cothe?
+AhelellSe fllllllelllll "
+1,6.854942836761475,5442.22875275257,181.30147260585363,"{'reserved_memory': 0, 'allocated_memory': 0}",118.74627939722102,"{'reserved_memory': 0, 'allocated_memory': 0}",8328265,4779329,128.0,384.0,2.0,4.0,4.0,4.0,True,True,True,True,True,2.0,1.25,True,4.0,GELU,0.1,0.4,0.5,False,"AOOOOAMOOLOEOEOOOEOLOEOEOOLOEEEAOEEEEEEEEOEEOoOELELOLOEEEEEEAOO:
+OoOEOoOLOOEEEEOEELOLEEOEOEALELOEOEE"
