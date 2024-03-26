@@ -4,3 +4,4 @@
 ### e.g. softmax-off-by-one significantly slower, potentially due to implementation inefficiencies, unsure
 ### RoPE embeddings seem to be slightly slower (7300 tokens/sec | 31 GB/s rather than 7800 | 34 but loss appears better. Also, token routing is much more balanced and results in drastically fewer dropped tokens.
 ### Interestingly, we also see training effects with GQA (e.g. 4 n_head, 2 n_kv_head), without even discussing its inference speed up. We find an increase in training tokens/sec to 8000+, and yet similar/lower memory bandwidth at 32-33 GB/s.
+### Using RMSNorm rather than LayerNorm tends to result in slower training time, unsure if expected.  This difference disappears if training is manually stopped then resumed. Losses begin much lower.

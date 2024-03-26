@@ -1,4 +1,4 @@
-### TODOs:
+### TODO:
 # more documentation
 # More features (see below) such as (smaller) weight initialization
 
@@ -61,16 +61,44 @@ class SwiGLU(nn.Module):
         return x * F.silu(gate)
 
 
-## activation mappings. defined inside to make use of model params
+## Activation mappings. defined inside to make use of model params
 act_fn_dict = {
     "GELU": nn.GELU(),
     "GEGLU": GEGLU(),  # halves dim to n_ff/2
     "SwiGLU": SwiGLU(),
 }  # halves dim to n_ff/2
-# SwiGLU seems faster than GELU (tho potentially due to fewer params), and potentially better too, from preliminary testing
+# SwiGLU seems faster than GELU (though potentially due to fewer params), and potentially better too, from preliminary testing
+
+### RMSNorm in place of LayerNorm, used by default.
+class RMSNorm(nn.Module):
+    """
+    Root-mean-square normalization, faster and more stable than layer normalization.
+    Inputs are normalized by RMS and scaled by a learned parameter, with no shift.
+    """
+
+    def __init__(self, size: int, dim: int = -1, eps: float = 1e-8) -> None:
+        super().__init__()
+        self.weight = nn.Parameter(torch.ones(size))  # scale
+        self.eps = eps
+        self.dim = dim
+        # did not register parameters for weight
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        norm_x = x.norm(2, dim=self.dim, keepdim=True)
+        x_normed = x * torch.rsqrt(norm_x + self.eps)
+
+        return self.weight * x_normed
+
+    def reset_parameters(self):
+        nn.init.ones_(self.weight)
+
 
 ## Model
 class MLP(nn.Module):
+    """
+    Transformer MLP layer.
+    """
+
     def __init__(self, n_embd, n_ff, activation, dropout=0.1):
         super().__init__()
 
@@ -91,6 +119,10 @@ class MLP(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
+    """
+    Multi-head attention block for transformer.
+    """
+
     def __init__(
         self,
         n_embd,
@@ -139,21 +171,22 @@ class MultiHeadAttention(nn.Module):
         # output: [B, S, n_embd]
         return x.transpose(1, 2).contiguous().view(B, S, self.n_embd)
 
-    ## Note: Did not re-write scaled dot product to support GQA——GQA is directly compatible with F.scaled_dot_product_attention
-    # def scaled_dot_product(self, q, k, v, dropout, mask=None):
-    #     # q,k,v are [B, n_head, S, head_dim]
-    #     # wei = [B, n_head, S, S]
-    #     wei = q @ k.transpose(-2, -1) / np.sqrt(self.head_dim) # use regular head_dim for scaling
-    #     # mask is [B, 1, S, S]
-    #     if mask is not None:
-    #         wei = wei.masked_fill(mask, float("-inf"))
+    def scaled_dot_product(self, q, k, v, dropout, mask=None):
+        # q,k,v are [B, n_head, S, head_dim]
+        # wei = [B, n_head, S, S]
+        wei = (
+            q @ k.transpose(-2, -1) / np.sqrt(self.head_dim)
+        )  # use regular head_dim for scaling
+        # mask is [B, 1, S, S]
+        if mask is not None:
+            wei = wei.masked_fill(mask, float("-inf"))
 
-    #     if self.softmax_off_by_one:
-    #         wei = dropout(softmax_off_by_one(wei, dim=-1))
-    #     else:
-    #         wei = dropout(F.softmax(wei, dim=-1))
-    #     out = wei @ v
-    #     return out
+        if self.softmax_off_by_one:
+            wei = dropout(softmax_off_by_one(wei, dim=-1))
+        else:
+            wei = dropout(F.softmax(wei, dim=-1))
+        out = wei @ v
+        return out
 
     def forward(self, x, mask=None):
         # x: (B, S, n_embd)
@@ -185,10 +218,14 @@ class MultiHeadAttention(nn.Module):
                 )
             # Both fused kernels do not support non-null attn_mask; let it generate its own (Dec 2023)
             # CPU: Both fused kernels do not support non-zero dropout. (Dec 2023)
-            except RuntimeError:
-                print("FlashAttention is not supported. See warnings for reasons.")
 
-        # attn = self.scaled_dot_product(q, k, v, self.drop, mask)
+            ## T4 GPU: Flash attention only supports gpu architectures in the range [sm80, sm90].
+            ## Attempting to run on a sm 7.5 gpu.
+            except:
+                attn = self.scaled_dot_product(q, k, v, self.drop, mask)
+
+            # except RuntimeError:
+            #     print("FlashAttention is not supported. See warnings for reasons.")
 
         # Step 4 and 5: Concatenate attention scores, return projected output matrix
         out = self.out(self.combine_heads(attn))  # (B, S, n_embd)
@@ -205,9 +242,7 @@ def repeat_kv(k, v, n_repeat):
 class SwitchFeedForward(nn.Module):
     """
     Switch FeedForward Layer.
-    TODO
-    Inputs:
-        -
+
     Returns: Tuple of length 4
         -Layer output
         -Token count per expert (for auxiliary loss)
@@ -226,7 +261,7 @@ class SwitchFeedForward(nn.Module):
         expert: MLP,
         activation,
         noise=0.1,
-        dropout=0.1,
+        dropout=0.4,
     ):
         super().__init__()
 
@@ -238,7 +273,9 @@ class SwitchFeedForward(nn.Module):
 
         self.experts = nn.ModuleList(
             [
-                copy.deepcopy(expert(d_model, n_ff, activation, dropout))
+                copy.deepcopy(
+                    expert(d_model, n_ff, activation, dropout)
+                )  ## apply expert dropout
                 for _ in range(n_experts)
             ]
         )
@@ -315,6 +352,10 @@ class SwitchFeedForward(nn.Module):
 
 
 class Block(nn.Module):
+    """
+    Residual block of transformer.
+    """
+
     def __init__(
         self,
         n_embd,
@@ -323,6 +364,7 @@ class Block(nn.Module):
         n_ff,
         device,
         norm_first,
+        use_rms_norm,
         use_rotary_embd,
         use_amp,
         switch,
@@ -359,16 +401,17 @@ class Block(nn.Module):
                 expert=MLP,
                 activation=activation,
                 noise=noise,
-                dropout=mlp_dropout,
-            )  # no change to dropout here
+                dropout=expert_dropout,
+            )
         else:
             self.ff = MLP(n_embd, n_ff, activation=activation, dropout=mlp_dropout)
 
-        self.ln1 = nn.LayerNorm(n_embd)
-        self.ln2 = nn.LayerNorm(n_embd)
+        self.ln1 = nn.LayerNorm(n_embd) if not use_rms_norm else RMSNorm(n_embd)
+        self.ln2 = nn.LayerNorm(n_embd) if not use_rms_norm else RMSNorm(n_embd)
         self.norm_first = norm_first
-        self.mlp_drop = nn.Dropout(p=mlp_dropout)
-        self.expert_drop = nn.Dropout(p=expert_dropout)
+        self.drop = nn.Dropout(
+            p=mlp_dropout
+        )  ## no difference in dropout here in the block
         self.switch = switch
 
     def forward(self, x, mask):
@@ -376,27 +419,28 @@ class Block(nn.Module):
 
         # pre layer norm
         if self.norm_first:
-            x = x + self.mlp_drop(self.sa(self.ln1(x), mask))
+            x = x + self.drop(self.sa(self.ln1(x), mask))
             if self.switch:
                 out, expert_token_counts, prob_sum, n_dropped = self.ff(self.ln2(x))
-                x = x + self.expert_drop(out)  # expert dropout
+                x = x + self.drop(out)
                 return x, expert_token_counts, prob_sum, n_dropped
             else:
-                x = x + self.mlp_drop(self.ff(self.ln2(x)))
+                x = x + self.drop(self.ff(self.ln2(x)))
         else:
-            x = self.ln1(x + self.mlp_drop(self.sa(x, mask)))
+            x = self.ln1(x + self.drop(self.sa(x, mask)))
             if self.switch:
                 out, expert_token_counts, prob_sum, n_dropped = self.ff(x)
-                x = self.ln1(x + self.expert_drop(out))  # expert dropout
+                x = self.ln1(x + self.drop(out))
                 return x, expert_token_counts, prob_sum, n_dropped
             else:
-                x = self.ln2(x + self.mlp_drop(self.ff(x)))
+                x = self.ln2(x + self.drop(self.ff(x)))
 
         return x
 
 
 class PositionalEncoding(nn.Module):
     """
+    Positional encoding for transformer.
     Formula taken from the original Transformer paper:
     PE(pos, 2i (even)) = sin(pos/(10000^{2i/d_model}))
     PE(pos, 2i+1 (odd)) = cos(pos/(10000^{2i/d_model}))
@@ -478,7 +522,7 @@ def apply_rotary_pos_emb(q, k, cos, sin):
 
 class Transformer(nn.Module):
     """
-    TODO
+    Transformer main class.
     Inputs:
         -vocab_size (int)
         -seq_length (int)
@@ -489,10 +533,12 @@ class Transformer(nn.Module):
         -device:
         -n_kv_head (int):
         -norm_first (bool=True):
+        -use_rms_norm (bool=True):
         -use_rotary_embd (bool=True):
-        -softmax_off_by_one (bool):
+        -softmax_off_by_one (bool=False):
         -use_amp (bool=False):
         -amp_dtype:
+        -init_method (default)
         -switch (bool=False): Indicates whether to insert Switch MoE layers.
         -switch_first (bool): Indicates whether to use a Switch layer in the first block.
         -every_n_switch (int): Frequency to insert Switch layers.
@@ -505,7 +551,7 @@ class Transformer(nn.Module):
         -mlp_dropout (float):
         -expert_dropout (float):
     Returns:
-        -
+        -Logits for each vocabulary token.
 
     Switch Transformer: https://arxiv.org/abs/2101.03961
     """
@@ -521,10 +567,12 @@ class Transformer(nn.Module):
         device,
         n_kv_head=None,
         norm_first=True,
+        use_rms_norm=True,
         use_rotary_embd=True,
         softmax_off_by_one=False,
         use_amp=False,
         amp_dtype=torch.bfloat16,
+        init_method="xavier_uniform",
         switch=False,
         switch_first=None,
         every_n_switch=None,
@@ -535,7 +583,7 @@ class Transformer(nn.Module):
         activation="GELU",
         noise=0.1,
         mlp_dropout=0.1,
-        expert_dropout=0.4,
+        expert_dropout=0.2,  ## not yet 0.4, unsure if good for pre-training. 0.4 from paper was for fine-tuning
         scale=1,
     ):
         super().__init__()
@@ -588,6 +636,12 @@ class Transformer(nn.Module):
                 stacklevel=2,
             )
 
+        if init_method == "switch" and not switch:
+            warnings.warn(
+                "`init_method='switch'`, but `switch=False`. This initialization may not be optimal.",
+                stacklevel=2,
+            )
+
         # todo: warn if switch_first=True but switch=False
 
         ### Alternate blocks with switch = True/False
@@ -614,6 +668,7 @@ class Transformer(nn.Module):
                     n_ff,
                     device,
                     norm_first,
+                    use_rms_norm,
                     use_rotary_embd,
                     use_amp,
                     switch_args[i],
@@ -638,6 +693,7 @@ class Transformer(nn.Module):
         self.seq_length = seq_length
         self.device = device
         self.use_amp = use_amp
+        self.amp_dtype = amp_dtype
 
         # for printing
         self.n_head = n_head
@@ -645,16 +701,43 @@ class Transformer(nn.Module):
         self.n_experts = n_experts
         self.is_gqa = n_kv_head != n_head
 
-        self.init_params()
+        self.init_params(init=init_method)
 
     # weight initialization (Xavier uniform)
-    def init_params(self, default_initialization=False):
-        if not default_initialization:
+    def init_params(self, init="xavier_uniform"):
+        """
+        Initializes model weight parameters, with the exception of biases and LayerNorm/RMSNorm.
+        """
+        assert init in [
+            "xavier_uniform",
+            "xavier_normal",
+            "switch",
+        ], "Only `xavier_uniform`, `xavier_normal`, and `switch` weight initializations are supported at this time."
+
+        if init == "xavier_uniform":
             for name, p in self.named_parameters():
                 if p.dim() > 1:
-                    nn.init.xavier_uniform_(p)
+                    nn.init.xavier_uniform_(
+                        p
+                    )  ## bounds (-a, a) calculated by a := gain=1.0 * √ (6 / (fan_in+fan_out))
 
-    # Remark: Xavier normal is not supported at this time.
+        elif init == "xavier_normal":
+            for name, p in self.named_parameters():
+                if p.dim() > 1:
+                    nn.init.xavier_normal_(
+                        p
+                    )  ## normal with mean = 0, std := gain=1.0 * √ (2 / (fan_in+fan_out))
+
+        elif init == "switch":
+            ### use Switch Transformer paper's modified smaller init
+            ## draw from a truncated normal with mean = 0, std = √(gain=0.1 / fan_in)
+            ## resample values > 2 std from mean
+            for name, p in self.named_parameters():
+                if p.dim() > 1:
+                    gain = 0.1
+                    fan_in, fan_out = nn.init._calculate_fan_in_and_fan_out(p)
+                    std = np.sqrt(gain / fan_in)
+                    nn.init.trunc_normal_(p, mean=0.0, std=std, a=-2 * std, b=2 * std)
 
     def get_causal_mask(self, x):
         """
@@ -726,12 +809,12 @@ class Transformer(nn.Module):
                 # i) Truncate to the most recent `max length` tokens
                 text_cond = input_ids[:, -self.seq_length :]
                 # ii) Retrieve predictions
-                with torch.no_grad():
-                    with torch.autocast(
-                        device_type=self.device.type,
-                        dtype=torch.bfloat16,
-                        enabled=self.use_amp,
-                    ):
+                with torch.autocast(
+                    device_type=self.device.type,
+                    dtype=self.amp_dtype,
+                    enabled=self.use_amp,
+                ):
+                    with torch.no_grad():
                         if self.switch:
                             logits, _, _, _ = self(text_cond)
                         else:
